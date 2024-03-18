@@ -9,6 +9,7 @@ using Unity.Burst.Intrinsics;
 using Unity.Burst;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.Collections;
 
 namespace Trejak.BuildingOccupancyMod.Jobs
 {
@@ -99,11 +100,17 @@ namespace Trejak.BuildingOccupancyMod.Jobs
                 { // Ignore mid-rise buildings, they're usually fine
                     return property;
                 }
+                // each floor has one large residence if it can fit
+                if (floorSize - MAX_RESIDENCE_SIZE > MIN_RESIDENCE_SIZE + 2)
+                {
+                    floorSize -= MAX_RESIDENCE_SIZE;
+                    floorUnits++;
+                }
                 while (floorSize > MIN_RESIDENCE_SIZE + 2)
                 {
-                    float maximum = floorSize < MAX_RESIDENCE_SIZE ? floorSize : MAX_RESIDENCE_SIZE;
-                    float minimum = MIN_RESIDENCE_SIZE;
-                    floorSize -= random.NextFloat(minimum, maximum); //TODO: remove the random component of this. It can result in inconsistent resident counts between game loads.
+                    //float maximum = floorSize < MAX_RESIDENCE_SIZE ? floorSize : MAX_RESIDENCE_SIZE;
+                    //float minimum = MIN_RESIDENCE_SIZE;
+                    floorSize -= MIN_RESIDENCE_SIZE;
                     floorUnits++;
                 }
                 var floorCount = (int)math.floor(height / RESIDENTIAL_HEIGHT);

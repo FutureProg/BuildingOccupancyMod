@@ -11,21 +11,24 @@ using System.Threading.Tasks;
 using Trejak.BuildingOccupancyMod.Jobs;
 using Unity.Collections;
 using Unity.Entities;
+using UnityEngine;
 
 namespace Trejak.BuildingOccupancyMod.Systems
 {
     public partial class OccupancyPrefabInitSystem : GameSystemBase
     {
         EntityQuery m_Query;
+        PrefabSystem m_PrefabSystem;
 
         protected override void OnCreate()
         {
             base.OnCreate();
 
             EntityQueryBuilder builder = new EntityQueryBuilder(Allocator.Temp);
-            m_Query = builder.WithAll<PrefabData, BuildingData, BuildingPropertyData, SpawnableBuildingData, ObjectGeometryData>()            
+            m_Query = builder.WithAll<PrefabData, BuildingData, BuildingPropertyData, SpawnableBuildingData, ObjectGeometryData, SubMesh>()            
                 .Build(this.EntityManager);
             builder.Reset();
+            m_PrefabSystem = World.GetOrCreateSystemManaged<PrefabSystem>();            
 
             World.GetOrCreateSystemManaged<ZoneSpawnSystem>().debugFastSpawn = true; // REMOVE FOR RELEASE
             RequireForUpdate(m_Query);
@@ -51,6 +54,28 @@ namespace Trejak.BuildingOccupancyMod.Systems
                 randomSeed = RandomSeed.Next()
             };
             residentialJob.ScheduleParallel(m_Query, this.Dependency).Complete();
+        }
+
+        private void GetBuildingDimensions()
+        {
+            List<Mesh> meshes = new List<Mesh>();
+            var entities = m_Query.ToEntityArray(Allocator.Temp);
+            int totalSize = 0;
+            foreach (var entity in entities)
+            {
+                //var prefabData = SystemAPI.GetComponentRO<PrefabData>(entity);
+                //var prefab = m_PrefabSystem.GetPrefab<BuildingPrefab>(prefabData.ValueRO);
+                DynamicBuffer<SubMesh> subMeshes = SystemAPI.GetBuffer<SubMesh>(entity);
+                foreach(var submesh in subMeshes)
+                {
+                    var meshData = SystemAPI.GetComponentRO<MeshData>(submesh.m_SubMesh);
+                    if ((meshData.ValueRO.m_State & MeshFlags.Base) != MeshFlags.Base || (meshData.ValueRO.m_DecalLayer & Game.Rendering.DecalLayers.Buildings) != Game.Rendering.DecalLayers.Buildings )
+                    {
+                        // not the main building of the asset, skip
+                        continue;
+                    }
+                }
+            }           
         }
 
         protected override void OnUpdate()
