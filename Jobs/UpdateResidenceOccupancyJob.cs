@@ -112,6 +112,9 @@ namespace Trejak.BuildingOccupancyMod.Jobs
             float FOUNDATION_HEIGHT = 1.0f; // Looks like that'd be it? Only using this for row homes    
             float MIN_RESIDENCE_SIZE = 80;
             float MAX_RESIDENCE_SIZE = 111; // between 800sqft and 1200sqft  (80sqm and 111sqm)  
+            float HALLWAY_BUFFER = 1.5f; // 1.5 metres of space in front of the unit's door
+            float ELEVATOR_RATIO = 1.0f / 60f; // 1 elevator for every 60 residences
+            float ELEVATOR_SPACE = 4.0f; // 4sqm for an elevator
 
             bool is_RowHome = zonedata.m_ZoneFlags.HasFlag(ZoneFlags.SupportNarrow);
             if (is_RowHome)
@@ -123,6 +126,8 @@ namespace Trejak.BuildingOccupancyMod.Jobs
             {
                 var floorSize = width * length;
                 int floorUnits = 0;
+                var floorCount = (int)math.floor(height / RESIDENTIAL_HEIGHT);
+                floorCount -= 1; // Remove for the lobby floor
                 //if (height < 52)
                 //{ // Ignore mid-rise buildings, they're usually fine
                 //    return property;
@@ -133,15 +138,15 @@ namespace Trejak.BuildingOccupancyMod.Jobs
                     floorSize -= MAX_RESIDENCE_SIZE;
                     floorUnits++;
                 }
-                while (floorSize > MIN_RESIDENCE_SIZE + 2)
+                float minThreshold = MIN_RESIDENCE_SIZE + math.ceil(ELEVATOR_RATIO * floorUnits * floorCount * ELEVATOR_SPACE) + HALLWAY_BUFFER;
+                do
                 {
                     //float maximum = floorSize < MAX_RESIDENCE_SIZE ? floorSize : MAX_RESIDENCE_SIZE;
                     //float minimum = MIN_RESIDENCE_SIZE;
                     floorSize -= MIN_RESIDENCE_SIZE;
                     floorUnits++;
-                }
-                var floorCount = (int)math.floor(height / RESIDENTIAL_HEIGHT);
-                floorCount -= 1; // Remove for the lobby floor 
+                    minThreshold = MIN_RESIDENCE_SIZE + math.ceil(ELEVATOR_RATIO * floorUnits * floorCount * ELEVATOR_SPACE) + HALLWAY_BUFFER;
+                } while (floorSize > minThreshold);
                 property.m_ResidentialProperties = floorUnits * floorCount;
             }
             return property;
