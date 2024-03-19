@@ -10,6 +10,8 @@ using Unity.Burst;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Collections;
+using Colossal.Mathematics;
+using Game.Objects;
 
 namespace Trejak.BuildingOccupancyMod.Jobs
 {
@@ -21,8 +23,10 @@ namespace Trejak.BuildingOccupancyMod.Jobs
         public ComponentTypeHandle<SpawnableBuildingData> spawnableBuildingDataHandle;
         public ComponentTypeHandle<ObjectGeometryData> objectGeometryHandle;
         public ComponentTypeHandle<BuildingData> buildingDataHandle;
+        public BufferTypeHandle<SubMesh> subMeshHandle;
 
         public ComponentLookup<ZoneData> zoneDataLookup;
+        public ComponentLookup<MeshData> meshDataLookup;
 
         public EntityCommandBuffer.ParallelWriter commandBuffer;
 
@@ -35,6 +39,7 @@ namespace Trejak.BuildingOccupancyMod.Jobs
             // Will look for mesh access later on.
             var spawnBuildingDataArr = chunk.GetNativeArray(ref spawnableBuildingDataHandle);
             var buildingDataArr = chunk.GetNativeArray(ref buildingDataHandle);
+            var subMeshBufferAccessor = chunk.GetBufferAccessor(ref subMeshHandle);
             var buildingPropertyDataArr = chunk.GetNativeArray(ref buildingPropertyDataHandle);
             var objectGeometryArr = chunk.GetNativeArray(ref objectGeometryHandle);
             var entityArr = chunk.GetNativeArray(entityHandle);
@@ -44,10 +49,11 @@ namespace Trejak.BuildingOccupancyMod.Jobs
             // Plugin.Log.LogInfo($"Updating {buildingDataArr.Count()} Items");                
             for (int i = 0; i < buildingDataArr.Length; i++)
             {
-                var spawnBuildingData = spawnBuildingDataArr[i];
-                var geom = objectGeometryArr[i];
-                var property = buildingPropertyDataArr[i];
-                var entity = entityArr[i];
+                SpawnableBuildingData spawnBuildingData = spawnBuildingDataArr[i];
+                ObjectGeometryData geom = objectGeometryArr[i];
+                BuildingPropertyData property = buildingPropertyDataArr[i];
+                DynamicBuffer<SubMesh> subMeshes = subMeshBufferAccessor[i];
+                Entity entity = entityArr[i];
                 if (spawnBuildingData.m_ZonePrefab == Entity.Null)
                 {
                     Mod.log.Info("Zone Prefab is null!");
@@ -59,16 +65,37 @@ namespace Trejak.BuildingOccupancyMod.Jobs
                     continue;
                 }
                 bool isResidential = zonedata.m_AreaType == Game.Zones.AreaType.Residential;
-                float width = geom.m_Size.x;
-                float length = geom.m_Size.z;
-                float height = geom.m_Size.y;
-                if (isResidential)
+                if (!isResidential)
                 {
-                    buildingPropertyDataArr[i] = UpdateResidential(unfilteredChunkIndex, width, length, height, random, zonedata, property, entity);
-                    changed += 1;
+                    continue;
                 }
+                
+                var dimensions = GetBuildingDimensions(subMeshes);
+                var size = ObjectUtils.GetSize(dimensions);
+                float width = size.x;// geom.m_Size.x;
+                float length = size.z;// geom.m_Size.z;
+                float height = size.y;// geom.m_Size.y;                
+                buildingPropertyDataArr[i] = UpdateResidential(unfilteredChunkIndex, width, length, height, random, zonedata, property, entity);
+                changed += 1;                
             }
             // Plugin.Log.LogInfo($"Successfully Updated {changed} Items!");              
+        }
+
+        private Bounds3 GetBuildingDimensions(DynamicBuffer<SubMesh> subMeshes)
+        {
+            var totalBounds = new Bounds3(0, 0);
+            foreach (var submesh in subMeshes)
+            {
+                var meshData = meshDataLookup[submesh.m_SubMesh];
+                if ((meshData.m_State & MeshFlags.Base) != MeshFlags.Base || (meshData.m_DecalLayer & Game.Rendering.DecalLayers.Buildings) != Game.Rendering.DecalLayers.Buildings)
+                {
+                    // not the main building of the asset, skip
+                    continue;
+                }
+                totalBounds |= meshData.m_Bounds;
+            }            
+            //float3 size = ObjectUtils.GetSize(totalBounds);
+            return totalBounds;
         }
 
         BuildingPropertyData UpdateResidential(int unfilteredChunkIndex, float width, float length, float height, Unity.Mathematics.Random random,
@@ -96,10 +123,10 @@ namespace Trejak.BuildingOccupancyMod.Jobs
             {
                 var floorSize = width * length;
                 int floorUnits = 0;
-                if (height < 52)
-                { // Ignore mid-rise buildings, they're usually fine
-                    return property;
-                }
+                //if (height < 52)
+                //{ // Ignore mid-rise buildings, they're usually fine
+                //    return property;
+                //}
                 // each floor has one large residence if it can fit
                 if (floorSize - MAX_RESIDENCE_SIZE > MIN_RESIDENCE_SIZE + 2)
                 {

@@ -1,16 +1,20 @@
-﻿using Colossal.Serialization.Entities;
+﻿using Colossal.Mathematics;
+using Colossal.Serialization.Entities;
 using Game;
 using Game.Common;
+using Game.Objects;
 using Game.Prefabs;
 using Game.Simulation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Trejak.BuildingOccupancyMod.Jobs;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace Trejak.BuildingOccupancyMod.Systems
@@ -51,32 +55,12 @@ namespace Trejak.BuildingOccupancyMod.Systems
                 zoneDataLookup = SystemAPI.GetComponentLookup<ZoneData>(true),
                 objectGeometryHandle = SystemAPI.GetComponentTypeHandle<ObjectGeometryData>(true),
                 buildingDataHandle = SystemAPI.GetComponentTypeHandle<BuildingData>(true),
-                randomSeed = RandomSeed.Next()
+                randomSeed = RandomSeed.Next(),
+                meshDataLookup = SystemAPI.GetComponentLookup<MeshData>(true),
+                subMeshHandle = SystemAPI.GetBufferTypeHandle<SubMesh>(true)
             };
             residentialJob.ScheduleParallel(m_Query, this.Dependency).Complete();
-        }
-
-        private void GetBuildingDimensions()
-        {
-            List<Mesh> meshes = new List<Mesh>();
-            var entities = m_Query.ToEntityArray(Allocator.Temp);
-            int totalSize = 0;
-            foreach (var entity in entities)
-            {
-                //var prefabData = SystemAPI.GetComponentRO<PrefabData>(entity);
-                //var prefab = m_PrefabSystem.GetPrefab<BuildingPrefab>(prefabData.ValueRO);
-                DynamicBuffer<SubMesh> subMeshes = SystemAPI.GetBuffer<SubMesh>(entity);
-                foreach(var submesh in subMeshes)
-                {
-                    var meshData = SystemAPI.GetComponentRO<MeshData>(submesh.m_SubMesh);
-                    if ((meshData.ValueRO.m_State & MeshFlags.Base) != MeshFlags.Base || (meshData.ValueRO.m_DecalLayer & Game.Rendering.DecalLayers.Buildings) != Game.Rendering.DecalLayers.Buildings )
-                    {
-                        // not the main building of the asset, skip
-                        continue;
-                    }
-                }
-            }           
-        }
+        }        
 
         protected override void OnUpdate()
         {
