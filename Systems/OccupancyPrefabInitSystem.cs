@@ -43,7 +43,7 @@ namespace Trejak.BuildingOccupancyMod.Systems
             if (mode != GameMode.Game)
             {
                 return;
-            }
+            }            
             var commandBuffer = new EntityCommandBuffer(Allocator.TempJob);
             var residentialJob = new UpdateResidenceOccupancyJob
             {
