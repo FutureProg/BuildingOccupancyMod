@@ -6,12 +6,13 @@ using Game.Simulation;
 using Game.UI;
 using Game.UI.Widgets;
 using System.Collections.Generic;
+using Trejak.BuildingOccupancyMod.Systems;
 using Unity.Entities;
 
 namespace Trejak.BuildingOccupancyMod
 {
     [FileLocation(nameof(BuildingOccupancyMod))]
-    [SettingsUIGroupOrder(kDebugGroup)]
+    [SettingsUIGroupOrder(kMaintenanceGroup, kDebugGroup)]
     [SettingsUIShowGroupName(kDebugGroup)]
     //[SettingsUIGroupOrder(kButtonGroup, kToggleGroup, kSliderGroup, kDropdownGroup)]
     //[SettingsUIShowGroupName(kButtonGroup, kToggleGroup, kSliderGroup, kDropdownGroup)]
@@ -20,6 +21,7 @@ namespace Trejak.BuildingOccupancyMod
         public const string kSection = "Main";
 
         public const string kDebugGroup = "Debug";
+        public const string kMaintenanceGroup = "Maintenance";
 
         //public const string kButtonGroup = "Button";
         //public const string kToggleGroup = "Toggle";
@@ -42,6 +44,17 @@ namespace Trejak.BuildingOccupancyMod
             }
         }
 
+        [SettingsUIButton]
+        [SettingsUIConfirmation]
+        [SettingsUISection(kSection, kMaintenanceGroup)]
+        public bool ResetHouseholds
+        {
+            set
+            {
+                ResetHouseholdsSystem.TriggerReset();
+            }
+        }
+        
         public override void SetDefaults()
         {
             EnableInstantBuilding = false;
@@ -114,7 +127,12 @@ namespace Trejak.BuildingOccupancyMod
 
                 { m_Setting.GetOptionGroupLocaleID(Setting.kDebugGroup), "Debug" },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.EnableInstantBuilding)), "Fast Building Spawning" },
-                { m_Setting.GetOptionDescLocaleID(nameof(Setting.EnableInstantBuilding)), $"Buildings are constructed immediately" }
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.EnableInstantBuilding)), $"Buildings are constructed immediately" },
+
+                { m_Setting.GetOptionGroupLocaleID(Setting.kMaintenanceGroup), "Maintenance" },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ResetHouseholds)), "Reset Households" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.ResetHouseholds)), $"If any building has more households than properties (usually when this mod is started with a pre-existing existing save), click this button to have some households look for a new home." },
+                { m_Setting.GetOptionWarningLocaleID(nameof(Setting.ResetHouseholds)), "Read the setting description first! Are you sure you want to reset the households?" }
 
                 //{ m_Setting.GetOptionGroupLocaleID(Setting.kButtonGroup), "Buttons" },
                 //{ m_Setting.GetOptionGroupLocaleID(Setting.kToggleGroup), "Toggle" },
