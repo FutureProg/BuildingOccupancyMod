@@ -34,7 +34,6 @@ namespace Trejak.BuildingOccupancyMod.Systems
             builder.Reset();
             m_PrefabSystem = World.GetOrCreateSystemManaged<PrefabSystem>();            
 
-            World.GetOrCreateSystemManaged<ZoneSpawnSystem>().debugFastSpawn = true; // REMOVE FOR RELEASE
             RequireForUpdate(m_Query);
         }
 
