@@ -149,7 +149,7 @@ namespace Trejak.BuildingOccupancyMod.Jobs
                     minThreshold = MIN_RESIDENCE_SIZE + math.ceil(ELEVATOR_RATIO * floorUnits * floorCount * ELEVATOR_SPACE) + HALLWAY_BUFFER;
                 } while (floorSize > minThreshold);
 
-                commandBuffer.AddComponent(unfilteredChunkIndex, prefab, new BuildingOccupancyOriginalData(property.m_ResidentialProperties));
+                //commandBuffer.AddComponent(unfilteredChunkIndex, prefab, new BuildingOccupancyOriginalData(property.m_ResidentialProperties)); Probably a bad idea tbh...
                 property.m_ResidentialProperties = floorUnits * floorCount;
             }
             return property;
