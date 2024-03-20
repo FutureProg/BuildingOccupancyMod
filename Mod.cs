@@ -25,6 +25,7 @@ namespace Trejak.BuildingOccupancyMod
             AssetDatabase.global.LoadSettings(nameof(BuildingOccupancyMod), m_Setting, new Setting(this));
 
             updateSystem.UpdateAt<OccupancyPrefabInitSystem>(SystemUpdatePhase.PrefabUpdate);
+            updateSystem.UpdateAt<ResetHouseholdsSystem>(SystemUpdatePhase.GameSimulation);
         }
 
         public void OnDispose()
