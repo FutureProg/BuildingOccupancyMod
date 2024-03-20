@@ -60,7 +60,7 @@ namespace Trejak.BuildingOccupancyMod.Systems
                 subMeshHandle = SystemAPI.GetBufferTypeHandle<SubMesh>(true)
             };
             residentialJob.ScheduleParallel(m_Query, this.Dependency).Complete();
-        }        
+        }
 
         protected override void OnUpdate()
         {
