@@ -12,6 +12,7 @@ using Unity.Mathematics;
 using Unity.Collections;
 using Colossal.Mathematics;
 using Game.Objects;
+using Trejak.BuildingOccupancyMod.Components;
 
 namespace Trejak.BuildingOccupancyMod.Jobs
 {
@@ -147,6 +148,8 @@ namespace Trejak.BuildingOccupancyMod.Jobs
                     floorUnits++;
                     minThreshold = MIN_RESIDENCE_SIZE + math.ceil(ELEVATOR_RATIO * floorUnits * floorCount * ELEVATOR_SPACE) + HALLWAY_BUFFER;
                 } while (floorSize > minThreshold);
+
+                commandBuffer.AddComponent(unfilteredChunkIndex, prefab, new BuildingOccupancyOriginalData(property.m_ResidentialProperties));
                 property.m_ResidentialProperties = floorUnits * floorCount;
             }
             return property;
