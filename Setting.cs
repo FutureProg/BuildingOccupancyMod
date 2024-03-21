@@ -1,6 +1,8 @@
 ﻿using Colossal;
 using Colossal.IO.AssetDatabase;
+using Game;
 using Game.Modding;
+using Game.SceneFlow;
 using Game.Settings;
 using Game.Simulation;
 using Game.UI;
@@ -33,6 +35,15 @@ namespace Trejak.BuildingOccupancyMod
 
         }
 
+        public static bool IsInGame()
+        {
+            if (GameManager.instance)
+            {
+                return GameManager.instance.gameMode.IsGame();
+            }            
+            return false;
+        }
+
         [SettingsUIDeveloper]
         [SettingsUISection(kSection, kDebugGroup)]
         public bool EnableInstantBuilding
@@ -46,6 +57,7 @@ namespace Trejak.BuildingOccupancyMod
 
         [SettingsUIButton]
         [SettingsUIConfirmation]
+        [SettingsUIHideByCondition(typeof(Setting), "IsInGame")]
         [SettingsUISection(kSection, kOverflowMaintenanceGroup)]
         public bool SeekNewHouseholds
         {
@@ -57,6 +69,7 @@ namespace Trejak.BuildingOccupancyMod
 
         [SettingsUIButton]
         [SettingsUIConfirmation]
+        [SettingsUIHideByCondition(typeof(Setting), "IsInGame")]
         [SettingsUISection(kSection, kOverflowMaintenanceGroup)]
         public bool DeleteOverflowHouseholds
         {
