@@ -8,5 +8,13 @@ using Unity.Entities;
 namespace Trejak.BuildingOccupancyMod.Components
 {
     public struct ResetHouseholdsTrigger: IComponentData
-    {}
+    {
+        public ResetType resetType;
+    }
+
+    public enum ResetType : byte
+    {
+        FindNewHome,
+        Delete
+    }
 }

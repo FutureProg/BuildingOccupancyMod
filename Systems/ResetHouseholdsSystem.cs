@@ -5,6 +5,7 @@ using Game.Citizens;
 using Game.Common;
 using Game.Companies;
 using Game.Prefabs;
+using Game.Simulation;
 using Game.Tools;
 using Trejak.BuildingOccupancyMod.Components;
 using Unity.Burst.Intrinsics;
@@ -16,17 +17,24 @@ namespace Trejak.BuildingOccupancyMod.Systems
     public partial class ResetHouseholdsSystem : GameSystemBase
     {
 
-        public EntityQuery m_TriggerQuery;
-        public EntityQuery m_HouseholdsQuery;
-        public EntityQuery m_BuildingsQuery;
+
+        EntityQuery m_TriggerQuery;
+        SimulationSystem m_SimulationSystem;
+        private EndFrameBarrier m_EndFrameBarrier;
+        EntityQuery m_HouseholdsQuery;
+        EntityQuery m_BuildingsQuery;
 
         public static bool reset { get; private set; }
 
-        public static void TriggerReset()
+        public static void TriggerReset(ResetType resetType)
         {            
             var em = World.DefaultGameObjectInjectionWorld.EntityManager;
-            em.CreateSingleton<ResetHouseholdsTrigger>();
-        }
+            var trigger = new ResetHouseholdsTrigger()
+            {
+                resetType = resetType
+            };
+            em.CreateSingleton(trigger);
+        }        
 
         protected override void OnCreate()
         {
@@ -52,6 +60,9 @@ namespace Trejak.BuildingOccupancyMod.Systems
             );
             this.m_TriggerQuery = GetEntityQuery(ComponentType.ReadWrite<ResetHouseholdsTrigger>());
 
+            this.m_SimulationSystem = World.GetOrCreateSystemManaged<SimulationSystem>();
+            this.m_EndFrameBarrier = World.GetExistingSystemManaged<EndFrameBarrier>(); 
+
             this.RequireForUpdate(m_TriggerQuery);
             this.RequireForUpdate(m_HouseholdsQuery);
             this.RequireForUpdate(m_BuildingsQuery);
@@ -59,19 +70,23 @@ namespace Trejak.BuildingOccupancyMod.Systems
 
         protected override void OnUpdate()
         {
+            var trigger = SystemAPI.GetSingleton<ResetHouseholdsTrigger>();
+
             var resetResidencesJob = new ResetResidencesJob()
             {
-                ecb = World.GetExistingSystemManaged<EndFrameBarrier>().CreateCommandBuffer(),
+                ecb = m_EndFrameBarrier.CreateCommandBuffer(),
                 commercialPropertyLookup = SystemAPI.GetComponentLookup<CommercialProperty>(true),
                 entityTypeHandle = SystemAPI.GetEntityTypeHandle(),
                 prefabRefTypeHandle = SystemAPI.GetComponentTypeHandle<PrefabRef>(true),
                 propertyDataLookup = SystemAPI.GetComponentLookup<BuildingPropertyData>(true),
                 randomSeed = RandomSeed.Next(),
-                renterTypeHandle = SystemAPI.GetBufferTypeHandle<Renter>(true),
-                workProviderLookup = SystemAPI.GetComponentLookup<WorkProvider>(true)
-            };
+                renterTypeHandle = SystemAPI.GetBufferTypeHandle<Renter>(false),
+                workProviderLookup = SystemAPI.GetComponentLookup<WorkProvider>(true),
+                resetType = trigger.resetType
+            };            
             EntityManager.DestroyEntity(m_TriggerQuery.GetSingletonEntity());
-            this.Dependency = resetResidencesJob.Schedule(m_BuildingsQuery, this.Dependency);            
+            this.Dependency = resetResidencesJob.Schedule(m_BuildingsQuery, this.Dependency);
+            this.m_EndFrameBarrier.AddJobHandleForProducer(this.Dependency);               
         }
 
         public partial struct ResetResidencesJob : IJobChunk
@@ -88,6 +103,8 @@ namespace Trejak.BuildingOccupancyMod.Systems
             public ComponentLookup<WorkProvider> workProviderLookup;
 
             public RandomSeed randomSeed;
+            public ResetType resetType;
+            private EntityArchetype m_RentEventArchetype;
 
             public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
             {
@@ -106,7 +123,7 @@ namespace Trejak.BuildingOccupancyMod.Systems
                     {
                         return;
                     }
-                    int householdsCount = 0;
+                    int householdsCount;
                     bool isCommercialOffice = commercialPropertyLookup.HasComponent(entity);   // TODO: Check for office as well                 
                     if (isCommercialOffice)
                     {
@@ -120,21 +137,37 @@ namespace Trejak.BuildingOccupancyMod.Systems
                     // Too many households
                     if (householdsCount > propertyData.m_ResidentialProperties)
                     {
-                        RemoveHouseholds(householdsCount - propertyData.m_ResidentialProperties, renters, ref random);
+                        RemoveHouseholds(householdsCount - propertyData.m_ResidentialProperties, entity, renters, ref random);
+                        if (resetType == ResetType.FindNewHome)
+                        {
+                            Entity e = ecb.CreateEntity(this.m_RentEventArchetype);
+                            ecb.SetComponent(e, new RentersUpdated(entity));
+                        }                        
                     }
                 }                
             }
 
-            private void RemoveHouseholds(int extraHouseholds, DynamicBuffer<Renter> renters, ref Unity.Mathematics.Random random)
+            private void RemoveHouseholds(int extraHouseholds, Entity property, DynamicBuffer<Renter> renters, ref Unity.Mathematics.Random random)
             {
                 //NativeHashSet<Entity> marked = new NativeHashSet<Entity>(extraHouseholds, Allocator.Temp);
-                for(int i = 0; i < extraHouseholds; i++)
+                for(int i = 0; i < extraHouseholds && extraHouseholds > 0; i++)
                 {
                     // was while(extraHouseholds > 0) but that might take too long if the set already contains it
                     //var entity = renters[random.NextInt(0,renters.Length)].m_Renter; // remove a random household so the newer ones aren't always removed
                     var entity = renters[i].m_Renter;
-                    if (workProviderLookup.HasComponent(entity)) continue;                                        
-                    ecb.AddComponent<PropertySeeker>(entity);
+                    if (workProviderLookup.HasComponent(entity)) continue;
+                    switch (resetType)
+                    {
+                        case ResetType.Delete:
+                            ecb.AddComponent<Deleted>(entity);                            
+                            break;
+                        case ResetType.FindNewHome:
+                            ecb.AddComponent<PropertySeeker>(entity);
+                            ecb.RemoveComponent<PropertyRenter>(entity);
+                            break;
+                        default:
+                            throw new System.Exception($"Invalid ResetType provided: \"{resetType}\"!");
+                    }
                     //extraHouseholds -= 1;                                        
                 }
             }
