@@ -146,7 +146,7 @@ namespace Trejak.BuildingOccupancyMod
         {
             return new Dictionary<string, string>
             {
-                { m_Setting.GetSettingsLocaleID(), "Building Occupancy" },
+                { m_Setting.GetSettingsLocaleID(), "Realistic Building Occupancy" },
                 { m_Setting.GetOptionTabLocaleID(Setting.kSection), "Main" },
 
                 { m_Setting.GetOptionGroupLocaleID(Setting.kDebugGroup), "Debug" },
