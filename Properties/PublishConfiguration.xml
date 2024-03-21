@@ -10,12 +10,14 @@
 	<LongDescription>
     # Realistic Building Occupancy
     This mod modifies the number of occupants in each building.
-    
+
     ## READ FIRST
-    Running the mod with a pre-existing save is possible but will take some effort to recover from. **If you are 
+    Running the mod with a pre-existing save is possible but will take some effort to recover from. **If you are
     using a pre-existing save file:**
     1. Upon loading the save, open the Realistic Building Occupancy settings.
-	</LongDescription>
+    2. Under the maintenance section choose one of the two options after reading their descriptions carefully. "Seek New Households" is recommended.
+    3. Return to the simulation and press play. Any building that had too many renters will now have the correct amount. (you might have to wait a bit)
+  </LongDescription>
 	<!--Thumbnail-->
 	<Thumbnail Value="Properties/Thumbnail.png" />
 	<!--Screenshot, can be set multiple times-->
