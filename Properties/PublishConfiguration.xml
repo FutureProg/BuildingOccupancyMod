@@ -17,6 +17,24 @@
     1. Upon loading the save, open the Realistic Building Occupancy settings.
     2. Under the maintenance section choose one of the two options after reading their descriptions carefully. "Seek New Households" is recommended.
     3. Return to the simulation and press play. Any building that had too many renters will now have the correct amount. (you might have to wait a bit)
+
+    ## How it works
+    The mod is active when the game starts up. Prefabs _shouldn't_ be affected outside of the simulation.
+    
+    ### Residential
+    1. The mod finds the size of a floor in the building, and gives it a number of units (the ground floor only counts for row-houses).
+    2. The mod multiplies this by the number of floors to give the total number of residential units    
+    Residential units are either 1200sqft (80sqm) or 800 sqft (111sqm) with only one large unit per floor. Space for other things like elevator(s) and hallway(s) accounted for (though it doesn't seem to make much of a difference).
+
+    ## Planned Features
+    - Changing parameters (e.g. setting the size of the large and regular units)
+    - Multiple businesses in one building for high-density commercial
+    - Multiple companies in one building for high-density office
+
+    ### Extra
+    **Why not just increase the number of workers each business in high density has?**<br/>
+    Doing this could negatively effect the efficiency of the building. I'm trying to avoid that.
+
   </LongDescription>
 	<!--Thumbnail-->
 	<Thumbnail Value="Properties/Thumbnail.png" />
