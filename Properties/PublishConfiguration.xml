@@ -9,7 +9,7 @@
 	<!--LongDescription Value="This is a long description" /-->
 	<LongDescription>
     # Realistic Building Occupancy
-    This mod modifies the number of occupants in each building.
+    This mod modifies the number of households and (in the future) businesses in a building. 
 
     ## READ FIRST
     Running the mod with a pre-existing save is possible but will take some effort to recover from. **If you are
@@ -19,7 +19,7 @@
     3. Return to the simulation and press play. Any building that had too many renters will now have the correct amount. (you might have to wait a bit)
 
     ## How it works
-    The mod is active when the game starts up. Prefabs _shouldn't_ be affected outside of the simulation.
+    The mod is active when the game starts up. Prefabs _shouldn't_ be affected outside of the simulation. If you want to revert, just load the save with the mod removed. 
     
     ### Residential
     1. The mod finds the size of a floor in the building, and gives it a number of units (the ground floor only counts for row-houses).
