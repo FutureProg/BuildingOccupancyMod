@@ -155,11 +155,11 @@ namespace Trejak.BuildingOccupancyMod
 
                 { m_Setting.GetOptionGroupLocaleID(Setting.kOverflowMaintenanceGroup), "Overflow Maintenance" },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.SeekNewHouseholds)), "Seek New Households" },
-                { m_Setting.GetOptionDescLocaleID(nameof(Setting.SeekNewHouseholds)), $"<b>RECOMMENDED:</b> If any building has more households than properties (usually when this mod is started with a pre-existing existing save), click this button to have some households look for a new home while the simulation plays. Effect is near immediate, so be aware." },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.SeekNewHouseholds)), $"RECOMMENDED: If any building has more households than properties (usually when this mod is started with a pre-existing existing save), click this button to have some households look for a new home while the simulation plays. Effect is near immediate, so be aware." },
                 { m_Setting.GetOptionWarningLocaleID(nameof(Setting.SeekNewHouseholds)), "Read the setting description first and prepare for residents to move out. Are you sure you want to reset the households?"},
 
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.DeleteOverflowHouseholds)), "Delete Overflow Households" },
-                { m_Setting.GetOptionDescLocaleID(nameof(Setting.DeleteOverflowHouseholds)), $"<b>USE WITH CAUTION:</b> If any building has more households than properties (usually when this mod is started with a pre-existing existing save), click this button to remove those households. This change is abrupt and immediate after pressing play." },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.DeleteOverflowHouseholds)), $"USE WITH CAUTION: If any building has more households than properties (usually when this mod is started with a pre-existing existing save), click this button to remove those households. This change is abrupt and immediate after pressing play." },
                 { m_Setting.GetOptionWarningLocaleID(nameof(Setting.DeleteOverflowHouseholds)), "Read the setting description first and prepare for a large drop in population. Are you sure you want to delete the overflow households?"}
 
                 //{ m_Setting.GetOptionGroupLocaleID(Setting.kButtonGroup), "Buttons" },
