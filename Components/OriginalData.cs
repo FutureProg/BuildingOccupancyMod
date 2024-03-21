@@ -12,11 +12,13 @@ namespace Trejak.BuildingOccupancyMod.Components
     {
         public int version;
         public int residentialPropertyCount;
+        public Entity prefabRef;
 
-        public BuildingOccupancyOriginalData(int residentialPropertyCount)
+        public BuildingOccupancyOriginalData(int residentialPropertyCount, Entity prefabRef)
         {
             version = 0;
             this.residentialPropertyCount = residentialPropertyCount;
+            this.prefabRef = prefabRef;
         }
 
         //public void Deserialize<TReader>(TReader reader) where TReader : IReader
