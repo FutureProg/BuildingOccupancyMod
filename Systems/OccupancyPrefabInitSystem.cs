@@ -23,6 +23,7 @@ namespace Trejak.BuildingOccupancyMod.Systems
     {
         EntityQuery m_Query;
         PrefabSystem m_PrefabSystem;
+        public bool initialized;
 
         protected override void OnCreate()
         {
@@ -32,14 +33,15 @@ namespace Trejak.BuildingOccupancyMod.Systems
             m_Query = builder.WithAll<PrefabData, BuildingData, BuildingPropertyData, SpawnableBuildingData, ObjectGeometryData, SubMesh>()            
                 .Build(this.EntityManager);
             builder.Reset();
-            m_PrefabSystem = World.GetOrCreateSystemManaged<PrefabSystem>();            
-
+            m_PrefabSystem = World.GetOrCreateSystemManaged<PrefabSystem>();
+            initialized = false;
             RequireForUpdate(m_Query);
         }
 
         protected override void OnGamePreload(Purpose purpose, GameMode mode)
         {
             base.OnGamePreload(purpose, mode);
+            this.initialized = false;
             if (mode != GameMode.Game)
             {
                 return;
@@ -59,6 +61,7 @@ namespace Trejak.BuildingOccupancyMod.Systems
                 subMeshHandle = SystemAPI.GetBufferTypeHandle<SubMesh>(true)
             };
             residentialJob.ScheduleParallel(m_Query, this.Dependency).Complete();
+            initialized = true;
         }
 
         protected override void OnUpdate()
