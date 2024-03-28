@@ -1,12 +1,17 @@
 ﻿using Colossal.Serialization.Entities;
 using Game;
 using Game.Buildings;
+using Game.Common;
+using Game.Companies;
+using Game.Net;
 using Game.Prefabs;
+using Game.Tools;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Trejak.BuildingOccupancyMod.Jobs;
 using Unity.Burst.Intrinsics;
 using Unity.Entities;
 
@@ -17,51 +22,52 @@ namespace Trejak.BuildingOccupancyMod.Systems
 
         bool run;
         public bool initialized;
-        OccupancyPrefabInitSystem m_PrefabInitSystem;
+        EndFrameBarrier m_EndFrameBarrier;
+
+        EntityQuery m_BuildingsQuery;
 
         protected override void OnCreate()
         {
             base.OnCreate();
-            this.run = false;
-            this.initialized = false;
-            m_PrefabInitSystem = World.GetOrCreateSystemManaged<OccupancyPrefabInitSystem>();            
+            m_EndFrameBarrier = World.GetOrCreateSystemManaged<EndFrameBarrier>();
+            m_BuildingsQuery = GetEntityQuery(
+                ComponentType.ReadOnly<Building>(),
+                ComponentType.ReadOnly<ResidentialProperty>(),
+                ComponentType.ReadOnly<PrefabRef>(),
+                ComponentType.ReadOnly<Renter>(),
+                ComponentType.Exclude<Deleted>(),
+                ComponentType.Exclude<Temp>()
+            );
         }
 
         protected override void OnGameLoadingComplete(Purpose purpose, GameMode mode)
         {
-            base.OnGameLoadingComplete(purpose, mode);
-            this.initialized = false;
+            base.OnGameLoadingComplete(purpose, mode);            
             if (mode == GameMode.Game && purpose == Purpose.LoadGame)
             {
-                this.run = true;
+                Mod.log.Info("Scheduling check for buildings that should be on the market");
+                AddPropertiesToMarketJob job = new AddPropertiesToMarketJob()
+                {
+                    ecb = m_EndFrameBarrier.CreateCommandBuffer(),
+                    commercialPropertyLookup = SystemAPI.GetComponentLookup<CommercialProperty>(true),
+                    entityTypeHandle = SystemAPI.GetEntityTypeHandle(),
+                    prefabRefTypeHandle = SystemAPI.GetComponentTypeHandle<PrefabRef>(true),
+                    buildingTypeHandle = SystemAPI.GetComponentTypeHandle<Building>(true),
+                    propertyDataLookup = SystemAPI.GetComponentLookup<BuildingPropertyData>(true),                    
+                    renterTypeHandle = SystemAPI.GetBufferTypeHandle<Renter>(false),
+                    propertyToBeOnMarketLookup = SystemAPI.GetComponentLookup<PropertyToBeOnMarket>(false),
+                    propertyOnMarketLookup = SystemAPI.GetComponentLookup<PropertyOnMarket>(true),
+                    consumptionDataLookup = SystemAPI.GetComponentLookup<ConsumptionData>(true),
+                    landValueLookup = SystemAPI.GetComponentLookup<LandValue>(true),
+                    buildingDataLookup = SystemAPI.GetComponentLookup<BuildingData>(true)
+                };
+                this.Dependency = job.ScheduleParallel(m_BuildingsQuery, this.Dependency);
+                m_EndFrameBarrier.AddJobHandleForProducer(this.Dependency);
             }
         }
 
         protected override void OnUpdate()
-        {
-            if (this.run && m_PrefabInitSystem.initialized)
-            {
-
-
-
-                this.run = false;
-                this.initialized = true;
-            }            
-        }
-
-        private partial struct CheckBuildings : IJobChunk
-        {
-
-            ComponentTypeHandle<PrefabRef> prefabRefHandle;
-            BufferTypeHandle<Renter> renterHandle;
-
-            ComponentLookup<CommercialProperty> commercialPropertyLookup;
-            ComponentLookup<BuildingPropertyData> buildingPropertiesLookup;
-
-            public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
-            {
-                
-            }
+        {          
         }
 
     }

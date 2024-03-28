@@ -9,9 +9,11 @@ using Game.Prefabs;
 using Game.Simulation;
 using Game.Tools;
 using Trejak.BuildingOccupancyMod.Components;
+using Trejak.BuildingOccupancyMod.Jobs;
 using Unity.Burst.Intrinsics;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Jobs;
 
 namespace Trejak.BuildingOccupancyMod.Systems
 {
@@ -73,6 +75,25 @@ namespace Trejak.BuildingOccupancyMod.Systems
         {
             var trigger = SystemAPI.GetSingleton<ResetHouseholdsTrigger>();
 
+            Mod.log.Info("Scheduling household reset of type " + trigger.ToString());
+
+            AddPropertiesToMarketJob job = new AddPropertiesToMarketJob()
+            {
+                ecb = m_EndFrameBarrier.CreateCommandBuffer(),
+                commercialPropertyLookup = SystemAPI.GetComponentLookup<CommercialProperty>(true),
+                entityTypeHandle = SystemAPI.GetEntityTypeHandle(),
+                prefabRefTypeHandle = SystemAPI.GetComponentTypeHandle<PrefabRef>(true),
+                buildingTypeHandle = SystemAPI.GetComponentTypeHandle<Building>(true),
+                propertyDataLookup = SystemAPI.GetComponentLookup<BuildingPropertyData>(true),
+                renterTypeHandle = SystemAPI.GetBufferTypeHandle<Renter>(false),
+                propertyToBeOnMarketLookup = SystemAPI.GetComponentLookup<PropertyToBeOnMarket>(false),
+                propertyOnMarketLookup = SystemAPI.GetComponentLookup<PropertyOnMarket>(true),
+                consumptionDataLookup = SystemAPI.GetComponentLookup<ConsumptionData>(true),
+                landValueLookup = SystemAPI.GetComponentLookup<LandValue>(true),
+                buildingDataLookup = SystemAPI.GetComponentLookup<BuildingData>(true)
+            };
+            JobHandle addToMarketHandle = job.ScheduleParallel(m_BuildingsQuery, this.Dependency);
+
             var resetResidencesJob = new ResetResidencesJob()
             {
                 ecb = m_EndFrameBarrier.CreateCommandBuffer(),
@@ -92,7 +113,7 @@ namespace Trejak.BuildingOccupancyMod.Systems
                 buildingDataLookup = SystemAPI.GetComponentLookup<BuildingData>(true)
             };            
             EntityManager.DestroyEntity(m_TriggerQuery.GetSingletonEntity());
-            this.Dependency = resetResidencesJob.Schedule(m_BuildingsQuery, this.Dependency);
+            this.Dependency = resetResidencesJob.Schedule(m_BuildingsQuery, addToMarketHandle);
             this.m_EndFrameBarrier.AddJobHandleForProducer(this.Dependency);               
         }
 
@@ -159,24 +180,24 @@ namespace Trejak.BuildingOccupancyMod.Systems
                             ecb.SetComponent(e, new RentersUpdated(entity));
                         }                        
                     } 
-                    else if (householdsCount < propertyData.m_ResidentialProperties && !propertyOnMarketLookup.HasComponent(entity))
-                    {
-                        Entity roadEdge = building.m_RoadEdge;
-                        BuildingData buildingData = buildingDataLookup[prefabRef.m_Prefab];
-                        float lotSize = buildingData.m_LotSize.x * buildingData.m_LotSize.y;
-                        float landValue = 0;
-                        if (landValueLookup.HasComponent(roadEdge))
-                        {
-                            landValue = lotSize * landValueLookup[roadEdge].m_LandValue;
-                        }
-                        var consumptionData = consumptionDataLookup[prefabRef.m_Prefab];
-                        var askingRent = RentAdjustSystem.GetRent(consumptionData, propertyData, landValue, Game.Zones.AreaType.Residential).x;
-                        ecb.AddComponent<PropertyOnMarket>(entity, new PropertyOnMarket { m_AskingRent = askingRent });
-                        if (propertyToBeOnMarketLookup.HasComponent(entity))
-                        {
-                            ecb.RemoveComponent<PropertyToBeOnMarket>(entity);
-                        }                        
-                    }
+                    //else if (householdsCount < propertyData.m_ResidentialProperties && !propertyOnMarketLookup.HasComponent(entity))
+                    //{
+                    //    Entity roadEdge = building.m_RoadEdge;
+                    //    BuildingData buildingData = buildingDataLookup[prefabRef.m_Prefab];
+                    //    float lotSize = buildingData.m_LotSize.x * buildingData.m_LotSize.y;
+                    //    float landValue = 0;
+                    //    if (landValueLookup.HasComponent(roadEdge))
+                    //    {
+                    //        landValue = lotSize * landValueLookup[roadEdge].m_LandValue;
+                    //    }
+                    //    var consumptionData = consumptionDataLookup[prefabRef.m_Prefab];
+                    //    var askingRent = RentAdjustSystem.GetRent(consumptionData, propertyData, landValue, Game.Zones.AreaType.Residential).x;
+                    //    ecb.AddComponent(entity, new PropertyOnMarket { m_AskingRent = askingRent });                        
+                    //}
+                    //else if (householdsCount == propertyData.m_ResidentialProperties && propertyToBeOnMarketLookup.HasComponent(entity))
+                    //{
+                    //    ecb.RemoveComponent<PropertyToBeOnMarket>(entity);
+                    //}
                 }                
             }
 
