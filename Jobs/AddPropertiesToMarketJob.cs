@@ -11,11 +11,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Trejak.BuildingOccupancyMod.Components;
+using Unity.Burst;
 using Unity.Burst.Intrinsics;
 using Unity.Entities;
 
 namespace Trejak.BuildingOccupancyMod.Jobs
 {
+    [BurstCompile]
     public partial struct AddPropertiesToMarketJob : IJobChunk
     {
         public EntityCommandBuffer ecb;
@@ -63,19 +65,25 @@ namespace Trejak.BuildingOccupancyMod.Jobs
                     householdsCount = renters.Length;
                 }
 
-                if (householdsCount < propertyData.m_ResidentialProperties && !propertyOnMarketLookup.HasComponent(entity))
+                if (householdsCount < propertyData.m_ResidentialProperties)                   
                 {
-                    Entity roadEdge = building.m_RoadEdge;
-                    BuildingData buildingData = buildingDataLookup[prefabRef.m_Prefab];
-                    float lotSize = buildingData.m_LotSize.x * buildingData.m_LotSize.y;
-                    float landValue = 0;
-                    if (landValueLookup.HasComponent(roadEdge))
+                    if (!propertyOnMarketLookup.HasComponent(entity))
                     {
-                        landValue = lotSize * landValueLookup[roadEdge].m_LandValue;
+                        Entity roadEdge = building.m_RoadEdge;
+                        BuildingData buildingData = buildingDataLookup[prefabRef.m_Prefab];
+                        float lotSize = buildingData.m_LotSize.x * buildingData.m_LotSize.y;
+                        float landValue = 0;
+                        if (landValueLookup.HasComponent(roadEdge))
+                        {
+                            landValue = lotSize * landValueLookup[roadEdge].m_LandValue;
+                        }
+                        var consumptionData = consumptionDataLookup[prefabRef.m_Prefab];
+                        var askingRent = RentAdjustSystem.GetRent(consumptionData, propertyData, landValue, Game.Zones.AreaType.Residential).x;
+                        ecb.AddComponent(entity, new PropertyOnMarket { m_AskingRent = askingRent });
+                    } else
+                    {
+
                     }
-                    var consumptionData = consumptionDataLookup[prefabRef.m_Prefab];
-                    var askingRent = RentAdjustSystem.GetRent(consumptionData, propertyData, landValue, Game.Zones.AreaType.Residential).x;
-                    ecb.AddComponent(entity, new PropertyOnMarket { m_AskingRent = askingRent });
                 }
                 else if (householdsCount == propertyData.m_ResidentialProperties && propertyToBeOnMarketLookup.HasComponent(entity))
                 {

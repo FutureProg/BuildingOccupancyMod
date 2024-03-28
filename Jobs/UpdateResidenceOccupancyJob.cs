@@ -16,7 +16,7 @@ using Trejak.BuildingOccupancyMod.Components;
 
 namespace Trejak.BuildingOccupancyMod.Jobs
 {
-    //[BurstCompile]
+    [BurstCompile]
     public partial struct UpdateResidenceOccupancyJob : IJobChunk
     {
         public EntityTypeHandle entityHandle;
@@ -31,7 +31,7 @@ namespace Trejak.BuildingOccupancyMod.Jobs
 
         public EntityCommandBuffer.ParallelWriter commandBuffer;
 
-        public RandomSeed randomSeed;
+        public RandomSeed randomSeed;        
 
         public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
         {
@@ -57,12 +57,12 @@ namespace Trejak.BuildingOccupancyMod.Jobs
                 Entity entity = entityArr[i];
                 if (spawnBuildingData.m_ZonePrefab == Entity.Null)
                 {
-                    Mod.log.Info("Zone Prefab is null!");
+                    //Mod.log.Info("Zone Prefab is null!");
                     continue;
                 }
                 if (!zoneDataLookup.TryGetComponent(spawnBuildingData.m_ZonePrefab, out var zonedata))
                 {
-                    Mod.log.Info("Zone Data not found!");
+                    //Mod.log.Info("Zone Data not found!");
                     continue;
                 }
                 bool isResidential = zonedata.m_AreaType == Game.Zones.AreaType.Residential;
@@ -117,7 +117,7 @@ namespace Trejak.BuildingOccupancyMod.Jobs
             float ELEVATOR_RATIO = 1.0f / 60f; // 1 elevator for every 60 residences
             float ELEVATOR_SPACE = 4.0f; // 4sqm for an elevator
 
-            bool is_RowHome = zonedata.m_ZoneFlags.HasFlag(ZoneFlags.SupportNarrow);            
+            bool is_RowHome = (zonedata.m_ZoneFlags & ZoneFlags.SupportNarrow) == ZoneFlags.SupportNarrow;            
             if (is_RowHome)
             {
                 float floorCount = (height - FOUNDATION_HEIGHT) / RESIDENTIAL_HEIGHT;

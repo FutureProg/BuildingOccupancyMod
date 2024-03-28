@@ -10,6 +10,7 @@ using Game.Simulation;
 using Game.Tools;
 using Trejak.BuildingOccupancyMod.Components;
 using Trejak.BuildingOccupancyMod.Jobs;
+using Unity.Burst;
 using Unity.Burst.Intrinsics;
 using Unity.Collections;
 using Unity.Entities;
@@ -35,7 +36,7 @@ namespace Trejak.BuildingOccupancyMod.Systems
             var trigger = new ResetHouseholdsTrigger()
             {
                 resetType = resetType
-            };
+            };            
             em.CreateSingleton(trigger);
         }        
 
@@ -77,22 +78,26 @@ namespace Trejak.BuildingOccupancyMod.Systems
 
             Mod.log.Info("Scheduling household reset of type " + trigger.ToString());
 
-            AddPropertiesToMarketJob job = new AddPropertiesToMarketJob()
-            {
-                ecb = m_EndFrameBarrier.CreateCommandBuffer(),
-                commercialPropertyLookup = SystemAPI.GetComponentLookup<CommercialProperty>(true),
-                entityTypeHandle = SystemAPI.GetEntityTypeHandle(),
-                prefabRefTypeHandle = SystemAPI.GetComponentTypeHandle<PrefabRef>(true),
-                buildingTypeHandle = SystemAPI.GetComponentTypeHandle<Building>(true),
-                propertyDataLookup = SystemAPI.GetComponentLookup<BuildingPropertyData>(true),
-                renterTypeHandle = SystemAPI.GetBufferTypeHandle<Renter>(false),
-                propertyToBeOnMarketLookup = SystemAPI.GetComponentLookup<PropertyToBeOnMarket>(false),
-                propertyOnMarketLookup = SystemAPI.GetComponentLookup<PropertyOnMarket>(true),
-                consumptionDataLookup = SystemAPI.GetComponentLookup<ConsumptionData>(true),
-                landValueLookup = SystemAPI.GetComponentLookup<LandValue>(true),
-                buildingDataLookup = SystemAPI.GetComponentLookup<BuildingData>(true)
-            };
-            JobHandle addToMarketHandle = job.ScheduleParallel(m_BuildingsQuery, this.Dependency);
+            //AddPropertiesToMarketJob job = new AddPropertiesToMarketJob()
+            //{
+            //    ecb = m_EndFrameBarrier.CreateCommandBuffer(),
+            //    commercialPropertyLookup = SystemAPI.GetComponentLookup<CommercialProperty>(true),
+            //    entityTypeHandle = SystemAPI.GetEntityTypeHandle(),
+            //    prefabRefTypeHandle = SystemAPI.GetComponentTypeHandle<PrefabRef>(true),
+            //    buildingTypeHandle = SystemAPI.GetComponentTypeHandle<Building>(true),
+            //    propertyDataLookup = SystemAPI.GetComponentLookup<BuildingPropertyData>(true),
+            //    renterTypeHandle = SystemAPI.GetBufferTypeHandle<Renter>(false),
+            //    propertyToBeOnMarketLookup = SystemAPI.GetComponentLookup<PropertyToBeOnMarket>(false),
+            //    propertyOnMarketLookup = SystemAPI.GetComponentLookup<PropertyOnMarket>(true),
+            //    consumptionDataLookup = SystemAPI.GetComponentLookup<ConsumptionData>(true),
+            //    landValueLookup = SystemAPI.GetComponentLookup<LandValue>(true),
+            //    buildingDataLookup = SystemAPI.GetComponentLookup<BuildingData>(true)
+            //};
+            //JobHandle addToMarketHandle = job.ScheduleParallel(m_BuildingsQuery, this.Dependency);
+            var temp = m_HouseholdsQuery.ToEntityArray(Allocator.Temp);
+            int householdsCount = temp.Length;
+            temp.Dispose();
+            NativeList<Entity> evictedHouseholds = new NativeList<Entity>(householdsCount/2, Allocator.TempJob);
 
             var resetResidencesJob = new ResetResidencesJob()
             {
@@ -110,13 +115,15 @@ namespace Trejak.BuildingOccupancyMod.Systems
                 propertyOnMarketLookup = SystemAPI.GetComponentLookup<PropertyOnMarket>(true),
                 consumptionDataLookup = SystemAPI.GetComponentLookup<ConsumptionData>(true),
                 landValueLookup = SystemAPI.GetComponentLookup<LandValue>(true),
-                buildingDataLookup = SystemAPI.GetComponentLookup<BuildingData>(true)
+                buildingDataLookup = SystemAPI.GetComponentLookup<BuildingData>(true),
+                evictedList = evictedHouseholds
             };            
             EntityManager.DestroyEntity(m_TriggerQuery.GetSingletonEntity());
-            this.Dependency = resetResidencesJob.Schedule(m_BuildingsQuery, addToMarketHandle);
-            this.m_EndFrameBarrier.AddJobHandleForProducer(this.Dependency);               
+            this.Dependency = resetResidencesJob.Schedule(m_BuildingsQuery, this.Dependency);
+            this.m_EndFrameBarrier.AddJobHandleForProducer(this.Dependency);                 
         }
 
+        [BurstCompile]
         public partial struct ResetResidencesJob : IJobChunk
         {
 
@@ -139,6 +146,7 @@ namespace Trejak.BuildingOccupancyMod.Systems
             public RandomSeed randomSeed;
             public ResetType resetType;
             private EntityArchetype m_RentEventArchetype;
+            public NativeList<Entity> evictedList;
 
             public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
             {
@@ -180,24 +188,24 @@ namespace Trejak.BuildingOccupancyMod.Systems
                             ecb.SetComponent(e, new RentersUpdated(entity));
                         }                        
                     } 
-                    //else if (householdsCount < propertyData.m_ResidentialProperties && !propertyOnMarketLookup.HasComponent(entity))
-                    //{
-                    //    Entity roadEdge = building.m_RoadEdge;
-                    //    BuildingData buildingData = buildingDataLookup[prefabRef.m_Prefab];
-                    //    float lotSize = buildingData.m_LotSize.x * buildingData.m_LotSize.y;
-                    //    float landValue = 0;
-                    //    if (landValueLookup.HasComponent(roadEdge))
-                    //    {
-                    //        landValue = lotSize * landValueLookup[roadEdge].m_LandValue;
-                    //    }
-                    //    var consumptionData = consumptionDataLookup[prefabRef.m_Prefab];
-                    //    var askingRent = RentAdjustSystem.GetRent(consumptionData, propertyData, landValue, Game.Zones.AreaType.Residential).x;
-                    //    ecb.AddComponent(entity, new PropertyOnMarket { m_AskingRent = askingRent });                        
-                    //}
-                    //else if (householdsCount == propertyData.m_ResidentialProperties && propertyToBeOnMarketLookup.HasComponent(entity))
-                    //{
-                    //    ecb.RemoveComponent<PropertyToBeOnMarket>(entity);
-                    //}
+                    else if (householdsCount < propertyData.m_ResidentialProperties && propertyOnMarketLookup.TryGetComponent(entity, out var onMarketInfo))
+                    {
+                        if (evictedList.Length > 0)
+                        {
+                            var delta = propertyData.m_ResidentialProperties - householdsCount;
+                            while (delta > 0 && evictedList.Length > 0)
+                            {
+                                var tenant = evictedList[0];
+                                //renters.Add(new Renter() { m_Renter = tenant });
+                                //ecb.RemoveComponent<PropertySeeker>(tenant);
+                                // TODO: Add to list for the RentJob
+                                evictedList.RemoveAt(0);
+                                delta--;
+                            }
+                            Entity e = ecb.CreateEntity(this.m_RentEventArchetype);
+                            ecb.SetComponent(e, new RentersUpdated(entity));
+                        }
+                    }
                 }                
             }
 
@@ -216,13 +224,14 @@ namespace Trejak.BuildingOccupancyMod.Systems
                             ecb.AddComponent<Deleted>(entity);                            
                             break;
                         case ResetType.FindNewHome:
-                            ecb.AddComponent<PropertySeeker>(entity);
+                            ecb.AddComponent(entity, new PropertySeeker());
                             ecb.RemoveComponent<PropertyRenter>(entity);
+                            evictedList.Add(entity);
+                            ecb.AddComponent(entity, new Evicted() { from = property });
                             break;
                         default:
                             throw new System.Exception($"Invalid ResetType provided: \"{resetType}\"!");
-                    }
-                    //extraHouseholds -= 1;                                        
+                    }                                    
                 }
             }
         }

@@ -36,7 +36,8 @@ namespace Trejak.BuildingOccupancyMod.Systems
                 ComponentType.ReadOnly<PrefabRef>(),
                 ComponentType.ReadOnly<Renter>(),
                 ComponentType.Exclude<Deleted>(),
-                ComponentType.Exclude<Temp>()
+                ComponentType.Exclude<Temp>(),
+                ComponentType.Exclude<PropertyOnMarket>()
             );
         }
 
