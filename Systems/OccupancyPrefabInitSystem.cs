@@ -5,6 +5,7 @@ using Game.Common;
 using Game.Objects;
 using Game.Prefabs;
 using Game.Simulation;
+using Game.UI.Menu;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,6 +25,9 @@ namespace Trejak.BuildingOccupancyMod.Systems
         EntityQuery m_Query;
         PrefabSystem m_PrefabSystem;
         public bool initialized;
+        NotificationUISystem m_NotificationUISystem;
+
+        NotificationUISystem.NotificationInfo activeNotification;
 
         protected override void OnCreate()
         {
@@ -34,6 +38,7 @@ namespace Trejak.BuildingOccupancyMod.Systems
                 .Build(this.EntityManager);
             builder.Reset();
             m_PrefabSystem = World.GetOrCreateSystemManaged<PrefabSystem>();
+            m_NotificationUISystem = World.GetOrCreateSystemManaged<NotificationUISystem>();
             initialized = false;
             RequireForUpdate(m_Query);
         }
@@ -62,6 +67,26 @@ namespace Trejak.BuildingOccupancyMod.Systems
             };
             residentialJob.ScheduleParallel(m_Query, this.Dependency).Complete();
             initialized = true;
+        }
+
+        protected override void OnGameLoadingComplete(Purpose purpose, GameMode mode)
+        {            
+            base.OnGameLoadingComplete(purpose, mode);
+            if ((purpose == Purpose.LoadGame || purpose == Purpose.NewGame) && mode.IsGame())
+            {
+                activeNotification = m_NotificationUISystem.AddOrUpdateNotification(
+                    $"{nameof(BuildingOccupancyMod)}.{nameof(Mod)}.Loaded",
+                    title: "Realistic Building Occupany Loaded",
+                    text: "Click to close",
+                    onClicked: this.CloseNotification,
+                    progressState: Colossal.PSI.Common.ProgressState.Complete
+                );                
+            }
+        }
+        
+        private void CloseNotification()
+        {            
+            m_NotificationUISystem.RemoveNotification(activeNotification.id);
         }
 
         protected override void OnUpdate()
