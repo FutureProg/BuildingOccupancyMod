@@ -9,8 +9,10 @@ namespace Trejak.BuildingOccupancyMod
 {
     public class Mod : IMod
     {
-        public static ILog log = LogManager.GetLogger($"{nameof(BuildingOccupancyMod)}.{nameof(Mod)}").SetShowsErrorsInUI(false);        
+        public static ILog log = LogManager.GetLogger($"{nameof(BuildingOccupancyMod)}.{nameof(Mod)}").SetShowsErrorsInUI(false);      
         public static Setting m_Setting { get; private set; }
+
+        public static Colossal.Version version = Colossal.Version.GetCurrent();
 
         public void OnLoad(UpdateSystem updateSystem)
         {

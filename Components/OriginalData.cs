@@ -5,33 +5,20 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Unity.Collections;
 using Unity.Entities;
 
 namespace Trejak.BuildingOccupancyMod.Components
 {
-    public partial struct BuildingOccupancyOriginalData : IBufferElementData
+    public struct BuildingOccupancyOriginalData : IBufferElementData
     {
-        public int version;
-        public int residentialPropertyCount;
-        public PrefabID prefabId;
+        public int residentialPropertyCount;        
+        public FixedString512Bytes prefabName;
 
-        public BuildingOccupancyOriginalData(int residentialPropertyCount, PrefabID prefabId)
+        public BuildingOccupancyOriginalData(int residentialPropertyCount, string prefabName)
         {
-            version = 0;
             this.residentialPropertyCount = residentialPropertyCount;
-            this.prefabId = prefabId;
+            this.prefabName = prefabName;
         }
-
-        //public void Deserialize<TReader>(TReader reader) where TReader : IReader
-        //{
-        //    reader.Read(out this.version);
-        //    reader.Read(out this.residentialPropertyCount);
-        //}
-
-        //public void Serialize<TWriter>(TWriter writer) where TWriter : IWriter
-        //{
-        //    writer.Write(this.version);
-        //    writer.Write(this.residentialPropertyCount);
-        //}
     }
 }
