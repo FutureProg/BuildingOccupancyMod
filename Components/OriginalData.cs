@@ -1,4 +1,5 @@
 ﻿using Colossal.Serialization.Entities;
+using Game.Prefabs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,17 +9,17 @@ using Unity.Entities;
 
 namespace Trejak.BuildingOccupancyMod.Components
 {
-    public partial struct BuildingOccupancyOriginalData : IComponentData
+    public partial struct BuildingOccupancyOriginalData : IBufferElementData
     {
         public int version;
         public int residentialPropertyCount;
-        public Entity prefabRef;
+        public PrefabID prefabId;
 
-        public BuildingOccupancyOriginalData(int residentialPropertyCount, Entity prefabRef)
+        public BuildingOccupancyOriginalData(int residentialPropertyCount, PrefabID prefabId)
         {
             version = 0;
             this.residentialPropertyCount = residentialPropertyCount;
-            this.prefabRef = prefabRef;
+            this.prefabId = prefabId;
         }
 
         //public void Deserialize<TReader>(TReader reader) where TReader : IReader
