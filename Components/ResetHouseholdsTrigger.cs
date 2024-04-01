@@ -14,7 +14,7 @@ namespace Trejak.BuildingOccupancyMod.Components
 
     public enum ResetType : byte
     {
-        FindNewHome,
-        Delete
+        FindNewHome = 1,
+        Delete = 2
     }
 }

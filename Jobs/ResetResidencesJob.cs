@@ -86,25 +86,27 @@ namespace Trejak.BuildingOccupancyMod.Jobs
                 }
                 else if (householdsCount < propertyData.m_ResidentialProperties && propertyOnMarketLookup.TryGetComponent(entity, out var onMarketInfo))
                 {
+                    // Doesn't seem to be working how I'd like. Just gonna skip this for now.
                     // Only run this if the "Relocate Evictions" setting is toggled.
-                    if (evictedList.Length > 0)
-                    {
-                        var delta = propertyData.m_ResidentialProperties - householdsCount;
-                        while (delta > 0 && evictedList.Length > 0)
-                        {
-                            var tenant = evictedList[0];
-                            //renters.Add(new Renter() { m_Renter = tenant });
-                            //ecb.RemoveComponent<PropertySeeker>(tenant);
-                            // TODO: Add to list for the RentJob
-                            rentQueue.Enqueue(new PropertyUtils.RentAction()
-                            {
-                                m_Property = entity,
-                                m_Renter = tenant
-                            });
-                            evictedList.RemoveAt(0);
-                            delta--;
-                        }                        
-                    }
+                    //if (evictedList.Length > 0)
+                    //{
+                    //    var delta = propertyData.m_ResidentialProperties - householdsCount;
+                    //    while (delta > 0 && evictedList.Length > 0)
+                    //    {
+                    //        var tenant = evictedList[0];
+                    //        //renters.Add(new Renter() { m_Renter = tenant });
+                    //        //ecb.RemoveComponent<PropertySeeker>(tenant);
+                    //        // TODO: Add to list for the RentJob
+                    //        rentQueue.Enqueue(new PropertyUtils.RentAction()
+                    //        {
+                    //            m_Property = entity,
+                    //            m_Renter = tenant
+                    //        });
+                    //        ecb.RemoveComponent<PropertySeeker>(tenant);
+                    //        evictedList.RemoveAt(0);
+                    //        delta--;
+                    //    }                        
+                    //}
                     Entity e = ecb.CreateEntity(this.m_RentEventArchetype);
                     ecb.SetComponent(e, new RentersUpdated(entity));
                 }
@@ -126,7 +128,11 @@ namespace Trejak.BuildingOccupancyMod.Jobs
                         ecb.AddComponent<Deleted>(entity);
                         break;
                     case ResetType.FindNewHome:
-                        ecb.AddComponent(entity, new PropertySeeker());
+                        ecb.AddComponent(entity, new PropertySeeker()
+                        {
+                            m_BestProperty = default(Entity),
+                            m_BestPropertyScore = float.NegativeInfinity
+                        }); 
                         ecb.RemoveComponent<PropertyRenter>(entity);
                         evictedList.Add(entity);
                         ecb.AddComponent(entity, new Evicted() { from = property });
