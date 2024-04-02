@@ -8,32 +8,48 @@
 	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
 	<!--LongDescription Value="This is a long description" /-->
 	<LongDescription>
-    # Realistic Building Occupancy
-    This mod modifies the number of households and (in the future) businesses in a building. 
+    ### Realistic Building Occupancy
 
-    ## READ FIRST
-    Running the mod with a pre-existing save is possible but will take some effort to recover from. **If you are
-    using a pre-existing save file:**
-    1. Upon loading the save, open the Realistic Building Occupancy settings.
-    2. Under the maintenance section choose one of the two options after reading their descriptions carefully. "Seek New Households" is recommended.
-    3. Return to the simulation and press play. Any building that had too many renters will now have the correct amount. (you might have to wait a bit)
+    This mod modifies the number of households and (in the future) businesses in a building.
 
-    ## How it works
-    The mod is active when the game starts up. Prefabs _shouldn't_ be affected outside of the simulation. If you want to revert, just load the save with the mod removed. 
-    
-    ### Residential
-    1. The mod finds the size of a floor in the building, and gives it a number of units (the ground floor only counts for row-houses).
-    2. The mod multiplies this by the number of floors to give the total number of residential units    
-    Residential units are either 1200sqft (80sqm) or 800 sqft (111sqm) with only one large unit per floor. Space for other things like elevator(s) and hallway(s) accounted for (though it doesn't seem to make much of a difference).
+    ### READ FIRST
 
-    ## Planned Features
-    - Changing parameters (e.g. setting the size of the large and regular units)
-    - Multiple businesses in one building for high-density commercial
-    - Multiple companies in one building for high-density office
+    **It is recommended to start a NEW city with this mod.**
+
+    **Existing Saves**
+
+    Running the mod with a pre-existing save is possible but will take some effort to recover from depending on the size of your city. For example, you may have a large homeless population for a while, or have more people complaining about high rent until they move out. **However, if you still want to use a pre-existing save file:**
+    1.  Read the warnings above
+    2.  Upon loading the save, create a backup
+    3.  Open the Realistic Building Occupancy settings
+    4.  Under the Overflow Maintenance section choose one of the two options after reading their descriptions carefully. "Seek New Households" is recommended for smaller cities. On larger cities, you may have a lot of homeless people for a while, but they likely won't end up in parks or abandoned buildings.
+    5.  Return to the simulation and press play. Any building that had too many renters will now have the correct amount. (you might have to wait a bit)
+
+    **Important**: you can only use one of the maintenance options at a time. If you don't like the results of one, reload the original save file.
+
+    ### How it works
+    The mod is active when the game starts up. Prefabs _shouldn't_ be affected outside of the simulation. If you want to revert, just load the save with the mod removed.
+
+    **Residential**
+
+    1.  The mod finds the size of a floor in the building, and gives it a number of units (the ground floor only counts for row-houses).
+    2.  The mod multiplies this by the number of floors to give the total number of residential units
+
+    Residential units are either 80sqm/1200sqft or 111sqm/800 sqft with only one large residence per floor. Space for other things like elevator(s) and hallway(s) accounted for (though it doesn't seem to make much of a difference). For row homes, you'll likely see a decrease (usually 3 or 4 households), but higher density buildings will typically increase in size with towers having the largest increase.
+
+    ### Planned Features
+
+    * Changing parameters (e.g. setting the size of the large and regular units)
+    * Multiple businesses in one building for high-density commercial
+    * Multiple companies in one building for high-density office
 
     ### Extra
-    **Why not just increase the number of workers each business in high density has?**<br/>
+
+    **Why not just increase the number of workers each business in high density has?**
+
     Doing this could negatively affect the efficiency of the building and could mess with the economy too much. I'm trying to avoid that.
+
+    [Discord Discussion](https://discord.com/channels/1024242828114673724/1221834704765059162)
 
   </LongDescription>
 	<!--Thumbnail-->
@@ -43,17 +59,20 @@
 	<!--Tag, can be set multiple times-->
 	<Tag Value="" />
 	<!--Link to the forum post where the mod can be discussed-->
-	<ForumLink Value="" />
+	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/realistic-building-occupancy.1644655/" />
 	<!--Version of the mod-->
-	<ModVersion Value="0.1.0" />
+	<ModVersion Value="0.1.1" />
 	<!--Recommended version of the base game to use the mod-->
-	<GameVersion Value="1.0.*" />
+	<GameVersion Value="1.1.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
-	<ChangeLog Value="" />
-	<!--ChangeLog>
-	</ChangeLog-->
+	<!--<ChangeLog Value="" />-->
+	<ChangeLog>
+    * Buildings that have extra space now immediately mark themselves as looking for a renter (instead of waiting for the game to do it itself). This should help stabilize the population a _little_ bit on reset.
+    * Added setting to notify the player when the mod has loaded in-game
+	</ChangeLog>
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon-->
 	<ExternalLink Type="github" Url="https://github.com/FutureProg/BuildingOccupancyMod" />
+  <ExternalLink Type="discord" Url="https://discord.gg/HTav7ARPs2"/>
 </Publish>
