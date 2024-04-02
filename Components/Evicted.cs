@@ -11,18 +11,18 @@ namespace Trejak.BuildingOccupancyMod.Components
     /// <summary>
     /// Added to households that were removed due to a lower number of properties
     /// </summary>
-    public partial struct Evicted : IComponentData, ISerializable
+    public partial struct Evicted : IComponentData, ISerializable, IDefaultSerializable
     {
         /// <summary>
         /// The property that they were evicted from
         /// </summary>
         public Entity from;
-        Version version;
+        int version;
 
         public Evicted(Entity from)
         {
             this.from = from;
-            this.version = Mod.version;
+            this.version = 0;
         }
 
         public void Deserialize<TReader>(TReader reader) where TReader : IReader
@@ -34,7 +34,13 @@ namespace Trejak.BuildingOccupancyMod.Components
         public void Serialize<TWriter>(TWriter writer) where TWriter : IWriter
         {
             writer.Write(this.from);
-            writer.Write(version);
+            writer.Write(this.version);
+        }
+
+        public void SetDefaults(Context context)
+        {
+            this.from = Entity.Null;
+            this.version = 0;
         }
     }
 }
