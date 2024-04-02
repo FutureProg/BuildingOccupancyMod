@@ -14,7 +14,7 @@ using Unity.Entities;
 namespace Trejak.BuildingOccupancyMod
 {
     [FileLocation(nameof(BuildingOccupancyMod))]
-    [SettingsUIGroupOrder(kOverflowMaintenanceGroup, kDebugGroup)]
+    [SettingsUIGroupOrder(kDefaultGroup, kOverflowMaintenanceGroup, kDebugGroup)]
     [SettingsUIShowGroupName(kOverflowMaintenanceGroup, kDebugGroup)]
     //[SettingsUIGroupOrder(kButtonGroup, kToggleGroup, kSliderGroup, kDropdownGroup)]
     //[SettingsUIShowGroupName(kButtonGroup, kToggleGroup, kSliderGroup, kDropdownGroup)]
@@ -22,8 +22,11 @@ namespace Trejak.BuildingOccupancyMod
     {        
         public const string kSection = "Main";
 
+        public const string kDefaultGroup = "Default";
         public const string kDebugGroup = "Debug";
         public const string kOverflowMaintenanceGroup = "Maintenance";
+
+        public static bool showLoadNotification;
 
         //public const string kButtonGroup = "Button";
         //public const string kToggleGroup = "Toggle";
@@ -42,6 +45,15 @@ namespace Trejak.BuildingOccupancyMod
                 return GameManager.instance.gameMode.IsGame();
             }            
             return false;
+        }
+
+        [SettingsUISection(kSection, kDefaultGroup)]
+        public bool EnableLoadNotification
+        {
+            get => showLoadNotification;
+            set {
+                showLoadNotification = value;
+            }
         }
 
         [SettingsUIDeveloper]
@@ -82,6 +94,7 @@ namespace Trejak.BuildingOccupancyMod
         public override void SetDefaults()
         {
             EnableInstantBuilding = false;
+            EnableLoadNotification = false;
         }
 
         //[SettingsUISection(kSection, kButtonGroup)]
@@ -148,6 +161,10 @@ namespace Trejak.BuildingOccupancyMod
             {
                 { m_Setting.GetSettingsLocaleID(), "Realistic Building Occupancy" },
                 { m_Setting.GetOptionTabLocaleID(Setting.kSection), "Main" },
+
+                {m_Setting.GetOptionGroupLocaleID(Setting.kDefaultGroup), "Default" },
+                {m_Setting.GetOptionLabelLocaleID(nameof(Setting.EnableLoadNotification)), "Mod Loaded Notification" },
+                {m_Setting.GetOptionDescLocaleID(nameof(Setting.EnableLoadNotification)), "Enable for a notification to be sent in-game when the mod has been successfully loaded."},
 
                 { m_Setting.GetOptionGroupLocaleID(Setting.kDebugGroup), "Debug" },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.EnableInstantBuilding)), "Fast Building Spawning" },

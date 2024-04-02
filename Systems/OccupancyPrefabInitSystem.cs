@@ -72,7 +72,7 @@ namespace Trejak.BuildingOccupancyMod.Systems
         protected override void OnGameLoadingComplete(Purpose purpose, GameMode mode)
         {            
             base.OnGameLoadingComplete(purpose, mode);
-            if ((purpose == Purpose.LoadGame || purpose == Purpose.NewGame) && mode.IsGame())
+            if (Setting.showLoadNotification && (purpose == Purpose.LoadGame || purpose == Purpose.NewGame) && mode.IsGame())
             {
                 activeNotification = m_NotificationUISystem.AddOrUpdateNotification(
                     $"{nameof(BuildingOccupancyMod)}.{nameof(Mod)}.Loaded",
@@ -87,6 +87,7 @@ namespace Trejak.BuildingOccupancyMod.Systems
         private void CloseNotification()
         {            
             m_NotificationUISystem.RemoveNotification(activeNotification.id);
+            activeNotification = null;
         }
 
         protected override void OnUpdate()
