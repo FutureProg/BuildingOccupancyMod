@@ -19,8 +19,6 @@ namespace Trejak.BuildingOccupancyMod.Systems
 {
     public partial class CheckBuildingsSystem : GameSystemBase
     {
-
-        bool run;
         public bool initialized;
         EndFrameBarrier m_EndFrameBarrier;
 
