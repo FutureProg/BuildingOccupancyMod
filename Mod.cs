@@ -1,9 +1,9 @@
-﻿using BuildingOccupancyMod.Systems;
-using Colossal.IO.AssetDatabase;
+﻿using Colossal.IO.AssetDatabase;
 using Colossal.Logging;
 using Game;
 using Game.Modding;
 using Game.SceneFlow;
+using Game.Simulation;
 using Game.UI;
 using HarmonyLib;
 using System.Linq;
@@ -38,7 +38,9 @@ namespace Trejak.BuildingOccupancyMod
             updateSystem.UpdateAt<OccupancyPrefabInitSystem>(SystemUpdatePhase.PrefabUpdate);
             updateSystem.UpdateAfter<CheckBuildingsSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<ResetHouseholdsSystem>(SystemUpdatePhase.GameSimulation);
-            updateSystem.UpdateAt<ModifiedCompanyFindPropertySystem>(SystemUpdatePhase.Modification1); // runs after the EndFrameBuffer, but before the game simulation
+            updateSystem.UpdateAt<MultiCommercialFindPropertySystem>(SystemUpdatePhase.GameSimulation);
+            updateSystem.UpdateAfter<ModifiedCompanyFindPropertySystem, MultiCommercialFindPropertySystem>(SystemUpdatePhase.GameSimulation);
+            updateSystem.UpdateBefore<ModifiedCompanyFindPropertySystem, PropertyRenterRemoveSystem>(SystemUpdatePhase.GameSimulation);
         }
 
         private void InstantiateSettings()
