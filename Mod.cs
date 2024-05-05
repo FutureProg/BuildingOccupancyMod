@@ -41,6 +41,7 @@ namespace Trejak.BuildingOccupancyMod
             updateSystem.UpdateAt<MultiCommercialFindPropertySystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAfter<ModifiedCompanyFindPropertySystem, MultiCommercialFindPropertySystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateBefore<ModifiedCompanyFindPropertySystem, PropertyRenterRemoveSystem>(SystemUpdatePhase.GameSimulation);
+            updateSystem.UpdateAt<DebugUISystem>(SystemUpdatePhase.UIUpdate);
         }
 
         private void InstantiateSettings()
