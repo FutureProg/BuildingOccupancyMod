@@ -33,7 +33,7 @@ namespace Trejak.BuildingOccupancyMod.Systems
         EntityQuery m_FreePropertyQuery;
 
         PropertyRenterRemoveSystem m_RenterRemoveSystem;
-        CommercialFindPropertySystem m_CommercialFindPropertySystem;
+        MultiCommercialFindPropertySystem m_CommercialFindPropertySystem;
 
         protected override void OnCreate()
         {
@@ -42,7 +42,7 @@ namespace Trejak.BuildingOccupancyMod.Systems
             m_MovedEventArchetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Event>(), ComponentType.ReadWrite<PathTargetMoved>());
 
             m_RenterRemoveSystem = World.GetOrCreateSystemManaged<PropertyRenterRemoveSystem>();
-            m_CommercialFindPropertySystem = World.GetOrCreateSystemManaged<CommercialFindPropertySystem>();
+            m_CommercialFindPropertySystem = World.GetOrCreateSystemManaged<MultiCommercialFindPropertySystem>();
 
             m_PropertyRenterQuery = EntityManager.CreateEntityQuery(
                 ComponentType.ReadWrite<ServiceAvailable>(),

@@ -127,7 +127,8 @@ namespace Trejak.BuildingOccupancyMod.Systems
                     entityTypeHandle = SystemAPI.GetEntityTypeHandle(),
                     prefabHandle = SystemAPI.GetComponentTypeHandle<PrefabRef>(),
                     renterHandle = SystemAPI.GetBufferTypeHandle<Renter>(),
-                    renterStorageList = renterStorageQueue
+                    renterStorageList = renterStorageQueue,
+                    propertyRenterLookup = SystemAPI.GetComponentLookup<PropertyRenter>()                   
                 };
                 var clearJobHandle = tempClearRentersJob.Schedule(m_OnMarketCommercialWithRentersQuery, this.Dependency);
 
@@ -171,7 +172,8 @@ namespace Trejak.BuildingOccupancyMod.Systems
                 var restoreRentersJob = new RestoreRentersJob()
                 {
                     renterLookup = SystemAPI.GetBufferLookup<Renter>(),
-                    renterStorageList = renterStorageQueue
+                    renterStorageList = renterStorageQueue,
+                    propertyRenterLookup = SystemAPI.GetComponentLookup<PropertyRenter>()                   
                 };
                 this.Dependency = restoreRentersJob.Schedule(this.Dependency);
 

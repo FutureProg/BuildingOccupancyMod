@@ -19,12 +19,15 @@ namespace Trejak.BuildingOccupancyMod.Jobs
         public Entity property;
         public Entity company;
         public int index;
+        public int rent;
+        public int maxRent;
     }
 
     public partial struct RestoreRentersJob : IJob
     {
         public BufferLookup<Renter> renterLookup;
         public NativeQueue<TempRenterStorage> renterStorageList;
+        public ComponentLookup<PropertyRenter> propertyRenterLookup;
 
         public void Execute()
         {
@@ -34,8 +37,24 @@ namespace Trejak.BuildingOccupancyMod.Jobs
                 {
                     renters.Add(new Renter() { m_Renter = item.company });
                 }
+                if (!propertyRenterLookup.HasComponent(item.company))
+                {
+                    propertyRenterLookup[item.company] = new PropertyRenter()
+                    {
+                        m_MaxRent = item.maxRent,
+                        m_Rent = item.rent,
+                        m_Property = item.property
+                    };
+                }
             }            
         }
+    }
+
+    public partial struct TempPropertyRenter : IComponentData
+    {
+        public Entity property;
+        public int maxRent;
+        public int rent;
     }
 
     /// <summary>
@@ -49,6 +68,7 @@ namespace Trejak.BuildingOccupancyMod.Jobs
         
         public ComponentLookup<BuildingPropertyData> buildingPropertyDataLookup;
         public ComponentLookup<CommercialCompany> commercialCompanyLookup;
+        public ComponentLookup<PropertyRenter> propertyRenterLookup;
         
         public NativeQueue<TempRenterStorage> renterStorageList;       
 
@@ -69,23 +89,30 @@ namespace Trejak.BuildingOccupancyMod.Jobs
                     for (int j = 0; j < renters.Length; j++)
                     {
                         var renter = renters[j];
-                        if (commercialCompanyLookup.HasComponent(renter))
+                        if (commercialCompanyLookup.HasComponent(renter) && propertyRenterLookup.TryGetComponent(renter, out var propertyRenterComponent))
                         {
                             tempStorageList.Add(new TempRenterStorage()
                             {
                                 property = building,
                                 company = renter.m_Renter,
-                                index = j
+                                maxRent = propertyRenterComponent.m_MaxRent,
+                                rent = propertyRenterComponent.m_Rent
                             });
                         }
                     }
                     if (tempStorageList.Length < buildingPropertyDataLookup[prefab].CountProperties(Game.Zones.AreaType.Commercial))
                     {
-                        foreach (var item in tempStorageList)
+                        for (int j = renters.Length - 1; j >= 0; j--)
+                        {                            
+                            if (commercialCompanyLookup.HasComponent(renters[j]))
+                            {
+                                renters.RemoveAt(j);
+                            }
+                        }
+                        foreach(var item in tempStorageList)
                         {
                             renterStorageList.Enqueue(item);
-                            renters.RemoveAt(item.index);                            
-                        }                                                
+                        }                        
                     }
                     tempStorageList.Clear();
                 }
