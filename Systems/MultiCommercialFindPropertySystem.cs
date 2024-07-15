@@ -17,6 +17,8 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 using Trejak.BuildingOccupancyMod.Jobs;
+using Game.Economy;
+using Unity.Mathematics;
 
 namespace Trejak.BuildingOccupancyMod.Systems
 {
@@ -120,23 +122,23 @@ namespace Trejak.BuildingOccupancyMod.Systems
         {
             if (this.m_CommerceQuery.CalculateEntityCount() > 0)
             {
-                var tempClearRentersJob = new TemporaryClearRentersJob()
-                {
-                    buildingPropertyDataLookup = SystemAPI.GetComponentLookup<BuildingPropertyData>(),
-                    commercialCompanyLookup = SystemAPI.GetComponentLookup<CommercialCompany>(),
-                    entityTypeHandle = SystemAPI.GetEntityTypeHandle(),
-                    prefabHandle = SystemAPI.GetComponentTypeHandle<PrefabRef>(),
-                    renterHandle = SystemAPI.GetBufferTypeHandle<Renter>(),
-                    renterStorageList = renterStorageQueue,
-                    propertyRenterLookup = SystemAPI.GetComponentLookup<PropertyRenter>()                   
-                };
-                var clearJobHandle = tempClearRentersJob.Schedule(m_OnMarketCommercialWithRentersQuery, this.Dependency);
+                //var tempClearRentersJob = new TemporaryClearRentersJob()
+                //{
+                //    buildingPropertyDataLookup = SystemAPI.GetComponentLookup<BuildingPropertyData>(),
+                //    commercialCompanyLookup = SystemAPI.GetComponentLookup<CommercialCompany>(),
+                //    entityTypeHandle = SystemAPI.GetEntityTypeHandle(),
+                //    prefabHandle = SystemAPI.GetComponentTypeHandle<PrefabRef>(),
+                //    renterHandle = SystemAPI.GetBufferTypeHandle<Renter>(),
+                //    renterStorageList = renterStorageQueue,
+                //    propertyRenterLookup = SystemAPI.GetComponentLookup<PropertyRenter>()                   
+                //};
+                //var clearJobHandle = tempClearRentersJob.Schedule(m_OnMarketCommercialWithRentersQuery, this.Dependency);
 
                 JobHandle job;
                 JobHandle job2;
-                PropertyUtils.CompanyFindPropertyJob jobData = new PropertyUtils.CompanyFindPropertyJob
+                MultiCompanyFindPropertyJob jobData = new()
                 {
-                    m_EntityType = this.__TypeHandle.__Unity_Entities_Entity_TypeHandle,
+                    m_EntityType = SystemAPI.GetEntityTypeHandle(),
                     m_PrefabType = SystemAPI.GetComponentTypeHandle<Game.Prefabs.PrefabRef>(false),
                     m_PropertySeekerType = SystemAPI.GetComponentTypeHandle<Game.Agents.PropertySeeker>(false),
                     m_CompanyDataType = SystemAPI.GetComponentTypeHandle<Game.Companies.CompanyData>(false),
@@ -165,17 +167,17 @@ namespace Trejak.BuildingOccupancyMod.Systems
                     m_RentQueue = this.m_RentQueue.AsParallelWriter(),
                     m_CommandBuffer = this.m_EndFrameBarrier.CreateCommandBuffer().AsParallelWriter()
                 };
-                this.Dependency = jobData.ScheduleParallel(this.m_CommerceQuery, JobHandle.CombineDependencies(job, job2, clearJobHandle));
+                this.Dependency = jobData.ScheduleParallel(this.m_CommerceQuery, JobHandle.CombineDependencies(job, job2, this.Dependency));
                 this.m_EndFrameBarrier.AddJobHandleForProducer(base.Dependency);
                 this.m_ResourceSystem.AddPrefabsReader(base.Dependency);
 
-                var restoreRentersJob = new RestoreRentersJob()
-                {
-                    renterLookup = SystemAPI.GetBufferLookup<Renter>(),
-                    renterStorageList = renterStorageQueue,
-                    propertyRenterLookup = SystemAPI.GetComponentLookup<PropertyRenter>()                   
-                };
-                this.Dependency = restoreRentersJob.Schedule(this.Dependency);
+                //var restoreRentersJob = new RestoreRentersJob()
+                //{
+                //    renterLookup = SystemAPI.GetBufferLookup<Renter>(),
+                //    renterStorageList = renterStorageQueue,
+                //    propertyRenterLookup = SystemAPI.GetComponentLookup<PropertyRenter>()                   
+                //};
+                //this.Dependency = restoreRentersJob.Schedule(this.Dependency);
 
                 JobHandle job3;
                 PropertyUtils.RentJob jobData2 = new PropertyUtils.RentJob
@@ -196,7 +198,6 @@ namespace Trejak.BuildingOccupancyMod.Systems
                     m_ServiceCompanyDatas = SystemAPI.GetComponentLookup<Game.Companies.ServiceCompanyData>(true),
                     m_ProcessDatas = SystemAPI.GetComponentLookup<Game.Prefabs.IndustrialProcessData>(true),
                     m_WorkProviders = SystemAPI.GetComponentLookup<Game.Companies.WorkProvider>(false),
-                    m_Citizens = SystemAPI.GetComponentLookup<Game.Citizens.Citizen>(false),
                     m_HouseholdCitizens = SystemAPI.GetBufferLookup<Game.Citizens.HouseholdCitizen>(true),
                     m_Abandoneds = SystemAPI.GetComponentLookup<Game.Buildings.Abandoned>(true),
                     m_HomelessHouseholds = SystemAPI.GetComponentLookup<Game.Citizens.HomelessHousehold>(true),
@@ -222,6 +223,60 @@ namespace Trejak.BuildingOccupancyMod.Systems
                 this.m_TriggerSystem.AddActionBufferWriter(this.Dependency);
                 this.m_EndFrameBarrier.AddJobHandleForProducer(this.Dependency);
             }
+        }
+
+        /// <summary>
+        /// Runs in place of CommercialFindProperty.Evaluate for the MultiCompanyFindPropertyJob
+        /// </summary>        
+        public static float Evaluate(Entity company, Entity property, ref ServiceCompanyData service, ref IndustrialProcessData process, ref PropertySeeker propertySeeker, ComponentLookup<Building> buildings, ComponentLookup<PrefabRef> prefabFromEntity, ComponentLookup<BuildingData> buildingDatas, BufferLookup<ResourceAvailability> availabilities, ComponentLookup<LandValue> landValues, ResourcePrefabs resourcePrefabs, ComponentLookup<ResourceData> resourceDatas, ComponentLookup<BuildingPropertyData> propertyDatas, ComponentLookup<SpawnableBuildingData> spawnableDatas, BufferLookup<Renter> renterBuffers, ComponentLookup<CommercialCompany> companies, ref ZonePreferenceData preferences)
+        {
+            if (buildings.HasComponent(property))
+            {
+                Building building = buildings[property];
+                Entity prefab = prefabFromEntity[property].m_Prefab;
+                _ = buildingDatas[prefab];
+                BuildingPropertyData buildingPropertyData = propertyDatas[prefab];
+                DynamicBuffer<Renter> dynamicBuffer = renterBuffers[property];
+                int companyCount = 0;
+                for (int i = 0; i < dynamicBuffer.Length; i++)
+                {
+                    if (companies.HasComponent(dynamicBuffer[i].m_Renter))
+                    {
+                        companyCount++;                                             
+                    }                    
+                }
+                if (companyCount >= 3) // TODO: Map to "ExtraProperties" component
+                {
+                    return -1f;
+                }
+
+                float num = 500f;
+                if (availabilities.HasBuffer(building.m_RoadEdge))
+                {
+                    DynamicBuffer<ResourceAvailability> availabilities2 = availabilities[building.m_RoadEdge];
+                    float num2 = 0f;
+                    if (landValues.HasComponent(building.m_RoadEdge))
+                    {
+                        num2 = landValues[building.m_RoadEdge].m_LandValue;
+                    }
+
+                    float spaceMultiplier = buildingPropertyData.m_SpaceMultiplier;
+                    int level = spawnableDatas[prefab].m_Level;
+                    num = ZoneEvaluationUtils.GetCommercialScore(availabilities2, building.m_CurvePosition, ref preferences, num2 / (spaceMultiplier * (1f + 0.5f * (float)level) * service.m_MaxWorkersPerCell), process.m_Output.m_Resource == Resource.Lodging);
+                    AvailableResource availableResourceSupply = EconomyUtils.GetAvailableResourceSupply(process.m_Input1.m_Resource);
+                    if (availableResourceSupply != AvailableResource.Count)
+                    {
+                        float weight = EconomyUtils.GetWeight(process.m_Input1.m_Resource, resourcePrefabs, ref resourceDatas);
+                        float marketPrice = EconomyUtils.GetMarketPrice(process.m_Output.m_Resource, resourcePrefabs, ref resourceDatas);
+                        float num3 = weight * (float)process.m_Input1.m_Amount / ((float)process.m_Output.m_Amount * marketPrice);
+                        num -= 200f * num3 / math.max(1f, NetUtils.GetAvailability(availabilities2, availableResourceSupply, building.m_CurvePosition));
+                    }
+                }
+
+                return num;
+            }
+
+            return -1f;
         }
 
         protected override void OnDestroy()

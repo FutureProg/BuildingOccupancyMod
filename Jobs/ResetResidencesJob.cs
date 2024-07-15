@@ -39,7 +39,7 @@ namespace Trejak.BuildingOccupancyMod.Jobs
 
         public RandomSeed randomSeed;
         public ResetType resetType;
-        private EntityArchetype m_RentEventArchetype;
+        public EntityArchetype m_RentEventArchetype;
         public NativeList<Entity> evictedList;
         public NativeQueue<PropertyUtils.RentAction> rentQueue;
 

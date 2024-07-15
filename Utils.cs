@@ -23,7 +23,7 @@ namespace Trejak.BuildingOccupancyMod
                 landValue = lotSize * landValueLookup[roadEdge].m_LandValue;
             }
             var consumptionData = consumptionDataLookup[prefab];
-            var askingRent = RentAdjustSystem.GetRent(consumptionData, propertyData, landValue, Game.Zones.AreaType.Residential).x;
+            var askingRent = 0;//TODO: Fix RentAdjustSystem.GetRent(consumptionData, propertyData, landValue, Game.Zones.AreaType.Residential).x;
             return askingRent;
         }
 

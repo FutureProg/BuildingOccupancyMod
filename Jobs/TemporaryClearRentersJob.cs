@@ -41,7 +41,6 @@ namespace Trejak.BuildingOccupancyMod.Jobs
                 {
                     propertyRenterLookup[item.company] = new PropertyRenter()
                     {
-                        m_MaxRent = item.maxRent,
                         m_Rent = item.rent,
                         m_Property = item.property
                     };
@@ -95,7 +94,6 @@ namespace Trejak.BuildingOccupancyMod.Jobs
                             {
                                 property = building,
                                 company = renter.m_Renter,
-                                maxRent = propertyRenterComponent.m_MaxRent,
                                 rent = propertyRenterComponent.m_Rent
                             });
                         }

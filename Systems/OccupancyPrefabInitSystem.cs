@@ -63,7 +63,7 @@ namespace Trejak.BuildingOccupancyMod.Systems
                 buildingDataHandle = SystemAPI.GetComponentTypeHandle<BuildingData>(true),
                 randomSeed = RandomSeed.Next(),
                 meshDataLookup = SystemAPI.GetComponentLookup<MeshData>(true),
-                subMeshHandle = SystemAPI.GetBufferTypeHandle<SubMesh>(true)
+                subMeshHandle = SystemAPI.GetBufferTypeHandle<SubMesh>(true)                
             };
             residentialJob.ScheduleParallel(m_Query, this.Dependency).Complete();
             initialized = true;

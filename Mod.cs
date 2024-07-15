@@ -38,10 +38,11 @@ namespace Trejak.BuildingOccupancyMod
             updateSystem.UpdateAt<OccupancyPrefabInitSystem>(SystemUpdatePhase.PrefabUpdate);
             updateSystem.UpdateAfter<CheckBuildingsSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<ResetHouseholdsSystem>(SystemUpdatePhase.GameSimulation);
-            updateSystem.UpdateAt<MultiCommercialFindPropertySystem>(SystemUpdatePhase.GameSimulation);
-            updateSystem.UpdateAfter<ModifiedCompanyFindPropertySystem, MultiCommercialFindPropertySystem>(SystemUpdatePhase.GameSimulation);
-            updateSystem.UpdateBefore<ModifiedCompanyFindPropertySystem, PropertyRenterRemoveSystem>(SystemUpdatePhase.GameSimulation);
-            updateSystem.UpdateAt<DebugUISystem>(SystemUpdatePhase.UIUpdate);
+            //updateSystem.UpdateAt<MultiCommercialFindPropertySystem>(SystemUpdatePhase.GameSimulation);
+            //updateSystem.UpdateAt<MultiCompanyPropertyOnMarketSystem>(SystemUpdatePhase.GameSimulation);
+            //updateSystem.UpdateAfter<ModifiedCompanyFindPropertySystem, MultiCommercialFindPropertySystem>(SystemUpdatePhase.GameSimulation);
+            //updateSystem.UpdateBefore<ModifiedCompanyFindPropertySystem, PropertyRenterRemoveSystem>(SystemUpdatePhase.GameSimulation);
+            //updateSystem.UpdateAt<DebugUISystem>(SystemUpdatePhase.UIUpdate);
         }
 
         private void InstantiateSettings()

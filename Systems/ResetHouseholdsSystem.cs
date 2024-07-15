@@ -27,6 +27,7 @@ namespace Trejak.BuildingOccupancyMod.Systems
 
         EntityQuery m_TriggerQuery;
         SimulationSystem m_SimulationSystem;
+        HouseholdFindPropertySystem m_householdFindPropertySystem; 
         private EndFrameBarrier m_EndFrameBarrier;
         EntityQuery m_HouseholdsQuery;
         EntityQuery m_BuildingsQuery;
@@ -69,7 +70,7 @@ namespace Trejak.BuildingOccupancyMod.Systems
             this.m_TriggerQuery = GetEntityQuery(ComponentType.ReadWrite<ResetHouseholdsTrigger>());
 
             m_RentEventArchetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Game.Common.Event>(), ComponentType.ReadWrite<RentersUpdated>());
-
+            m_householdFindPropertySystem = World.GetOrCreateSystemManaged<HouseholdFindPropertySystem>();
             this.m_SimulationSystem = World.GetOrCreateSystemManaged<SimulationSystem>();
             this.m_EndFrameBarrier = World.GetExistingSystemManaged<EndFrameBarrier>(); 
 
@@ -109,7 +110,8 @@ namespace Trejak.BuildingOccupancyMod.Systems
                 landValueLookup = SystemAPI.GetComponentLookup<LandValue>(true),
                 buildingDataLookup = SystemAPI.GetComponentLookup<BuildingData>(true),
                 evictedList = evictedHouseholds,
-                rentQueue = rentQueue
+                m_RentEventArchetype = m_RentEventArchetype,
+                rentQueue = rentQueue                
             };            
             EntityManager.DestroyEntity(m_TriggerQuery.GetSingletonEntity());
             JobHandle resetHandle = resetResidencesJob.Schedule(m_BuildingsQuery, this.Dependency);            
@@ -134,8 +136,7 @@ namespace Trejak.BuildingOccupancyMod.Systems
                 m_BuildingDatas = SystemAPI.GetComponentLookup<BuildingData>(true),
                 m_ServiceCompanyDatas = SystemAPI.GetComponentLookup<ServiceCompanyData>(true),
                 m_ProcessDatas = SystemAPI.GetComponentLookup<IndustrialProcessData>(true),
-                m_WorkProviders = SystemAPI.GetComponentLookup<WorkProvider>(false),
-                m_Citizens = SystemAPI.GetComponentLookup<Citizen>(false),
+                m_WorkProviders = SystemAPI.GetComponentLookup<WorkProvider>(false),                
                 m_HouseholdCitizens = SystemAPI.GetBufferLookup<HouseholdCitizen>(true),
                 m_Abandoneds = SystemAPI.GetComponentLookup<Abandoned>(true),
                 m_HomelessHouseholds = SystemAPI.GetComponentLookup<HomelessHousehold>(true),
@@ -154,7 +155,8 @@ namespace Trejak.BuildingOccupancyMod.Systems
                 m_AreaType = Game.Zones.AreaType.Residential,
                 m_CommandBuffer = ecb,
                 m_RentQueue = rentQueue,
-                m_ReservedProperties = reservedProperties
+                m_ReservedProperties = reservedProperties,
+                m_DebugDisableHomeless = m_householdFindPropertySystem.debugDisableHomeless                
             };
             this.Dependency = rentJob.Schedule(JobHandle.CombineDependencies(statsEventQueueHandle, resetHandle));
             cityStatsSystem.AddWriter(this.Dependency);

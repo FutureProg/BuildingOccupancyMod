@@ -16,12 +16,12 @@ namespace Trejak.BuildingOccupancyMod.Systems
         protected override void OnCreate()
         {
             // Show Property Count
-            var updateInfoMethod = (Entity entity, Entity prefab, GenericInfo info) => {
+            var updateInfoMethod = new Action<Entity, Entity, GenericInfo> ((Entity entity, Entity prefab, GenericInfo info) => {
                 var buildingProperty = this.EntityManager.GetComponentData<BuildingPropertyData>(prefab);
                 var properties = buildingProperty.CountProperties();
                 info.label = "Property Count";
                 info.value = $"Property Count: {properties}";
-            };
+            });
             this.World.GetOrCreateSystemManaged<SelectedInfoUISystem>().AddDeveloperInfo(new GenericInfo(
                 (entity, prefab) => this.EntityManager.HasComponent<BuildingPropertyData>(prefab),
                 updateInfoMethod

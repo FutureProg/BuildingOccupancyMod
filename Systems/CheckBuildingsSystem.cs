@@ -22,6 +22,7 @@ namespace Trejak.BuildingOccupancyMod.Systems
         public bool initialized;
         EndFrameBarrier m_EndFrameBarrier;
 
+        EntityQuery m_EconomyParamQuery;
         EntityQuery m_BuildingsQuery;
 
         protected override void OnCreate()
@@ -37,6 +38,8 @@ namespace Trejak.BuildingOccupancyMod.Systems
                 ComponentType.Exclude<Temp>(),
                 ComponentType.Exclude<PropertyOnMarket>()
             );
+
+            m_EconomyParamQuery = GetEntityQuery(ComponentType.ReadOnly<EconomyParameterData>());
         }
 
         protected override void OnGameLoadingComplete(Purpose purpose, GameMode mode)
@@ -52,13 +55,17 @@ namespace Trejak.BuildingOccupancyMod.Systems
                     entityTypeHandle = SystemAPI.GetEntityTypeHandle(),
                     prefabRefTypeHandle = SystemAPI.GetComponentTypeHandle<PrefabRef>(true),
                     buildingTypeHandle = SystemAPI.GetComponentTypeHandle<Building>(true),
-                    propertyDataLookup = SystemAPI.GetComponentLookup<BuildingPropertyData>(true),                    
+                    propertyDataLookup = SystemAPI.GetComponentLookup<BuildingPropertyData>(true),
                     renterTypeHandle = SystemAPI.GetBufferTypeHandle<Renter>(false),
                     propertyToBeOnMarketLookup = SystemAPI.GetComponentLookup<PropertyToBeOnMarket>(false),
                     propertyOnMarketLookup = SystemAPI.GetComponentLookup<PropertyOnMarket>(true),
                     consumptionDataLookup = SystemAPI.GetComponentLookup<ConsumptionData>(true),
                     landValueLookup = SystemAPI.GetComponentLookup<LandValue>(true),
-                    buildingDataLookup = SystemAPI.GetComponentLookup<BuildingData>(true)
+                    buildingDataLookup = SystemAPI.GetComponentLookup<BuildingData>(true),
+                    zoneDataLookup = SystemAPI.GetComponentLookup<ZoneData>(true),
+                    spawnableBuildingDataLookup = SystemAPI.GetComponentLookup<SpawnableBuildingData>(true),
+                    economyParameterData = m_EconomyParamQuery.GetSingleton<EconomyParameterData>()
+
                 };
                 this.Dependency = job.ScheduleParallel(m_BuildingsQuery, this.Dependency);
                 m_EndFrameBarrier.AddJobHandleForProducer(this.Dependency);

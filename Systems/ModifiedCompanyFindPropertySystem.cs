@@ -90,7 +90,7 @@ namespace Trejak.BuildingOccupancyMod.Systems
                 m_CommercialFindPropertySystem.CheckedStateRef.Dependency, 
                 this.Dependency
             );                        
-            this.Dependency = job.Schedule(m_PropertyRenterQuery, dependencyHandle);
+            this.Dependency = job.Schedule(m_PropertyRenterQuery, this.Dependency);
         }
 
 

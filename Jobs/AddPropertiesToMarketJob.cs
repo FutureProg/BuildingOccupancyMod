@@ -21,6 +21,7 @@ namespace Trejak.BuildingOccupancyMod.Jobs
     public partial struct AddPropertiesToMarketJob : IJobChunk
     {
         public EntityCommandBuffer ecb;
+        public EconomyParameterData economyParameterData;
 
         public EntityTypeHandle entityTypeHandle;        
         public BufferTypeHandle<Renter> renterTypeHandle;
@@ -34,6 +35,8 @@ namespace Trejak.BuildingOccupancyMod.Jobs
         public ComponentLookup<PropertyOnMarket> propertyOnMarketLookup;
         public ComponentLookup<ConsumptionData> consumptionDataLookup;
         public ComponentLookup<LandValue> landValueLookup;
+        public ComponentLookup<SpawnableBuildingData> spawnableBuildingDataLookup;
+        public ComponentLookup<ZoneData> zoneDataLookup;
 
 
         public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
@@ -71,14 +74,20 @@ namespace Trejak.BuildingOccupancyMod.Jobs
                     {
                         Entity roadEdge = building.m_RoadEdge;
                         BuildingData buildingData = buildingDataLookup[prefabRef.m_Prefab];
-                        float lotSize = buildingData.m_LotSize.x * buildingData.m_LotSize.y;
+                        int lotSize = buildingData.m_LotSize.x * buildingData.m_LotSize.y;
                         float landValue = 0;
                         if (landValueLookup.HasComponent(roadEdge))
                         {
                             landValue = lotSize * landValueLookup[roadEdge].m_LandValue;
                         }
+                        var areaType = Game.Zones.AreaType.None;
+                        if (this.spawnableBuildingDataLookup.TryGetComponent(prefabRef.m_Prefab, out var spawnableBldgData))
+                        {
+                            areaType = zoneDataLookup[spawnableBldgData.m_ZonePrefab].m_AreaType;
+                        }
                         var consumptionData = consumptionDataLookup[prefabRef.m_Prefab];
-                        var askingRent = RentAdjustSystem.GetRent(consumptionData, propertyData, landValue, Game.Zones.AreaType.Residential).x;
+                        var buildingLevel = PropertyUtils.GetBuildingLevel(prefabRef.m_Prefab, spawnableBuildingDataLookup);
+                        var askingRent = PropertyUtils.GetRentPricePerRenter(consumptionData, propertyData, buildingLevel, lotSize, landValue, areaType, ref this.economyParameterData);
                         ecb.AddComponent(entity, new PropertyOnMarket { m_AskingRent = askingRent });
                     } else
                     {

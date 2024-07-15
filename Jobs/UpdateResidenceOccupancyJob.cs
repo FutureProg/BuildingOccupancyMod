@@ -46,8 +46,7 @@ namespace Trejak.BuildingOccupancyMod.Jobs
             var entityArr = chunk.GetNativeArray(entityHandle);
             var random = randomSeed.GetRandom(1);
 
-            int changed = 0;
-            // Plugin.Log.LogInfo($"Updating {buildingDataArr.Count()} Items");                
+            int changed = 0;              
             for (int i = 0; i < buildingDataArr.Length; i++)
             {
                 SpawnableBuildingData spawnBuildingData = spawnBuildingDataArr[i];
@@ -78,8 +77,7 @@ namespace Trejak.BuildingOccupancyMod.Jobs
                 float height = size.y;// geom.m_Size.y;                
                 buildingPropertyDataArr[i] = UpdateResidential(unfilteredChunkIndex, width, length, height, random, zonedata, property, entity);
                 changed += 1;                
-            }
-            // Plugin.Log.LogInfo($"Successfully Updated {changed} Items!");              
+            }      
         }
 
         private Bounds3 GetBuildingDimensions(DynamicBuffer<SubMesh> subMeshes)
@@ -95,7 +93,6 @@ namespace Trejak.BuildingOccupancyMod.Jobs
                 }
                 totalBounds |= meshData.m_Bounds;
             }            
-            //float3 size = ObjectUtils.GetSize(totalBounds);
             return totalBounds;
         }
 
